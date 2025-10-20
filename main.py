@@ -16,10 +16,14 @@ import os
 import logging
 import time
 import sys
+from pathlib import Path
 
-# Add DON Stack to path
-sys.path.append('/app')
-sys.path.append('/app/src')
+# Add DON Stack to path (works both locally and in Docker)
+current_dir = Path(__file__).parent
+sys.path.insert(0, str(current_dir))
+sys.path.insert(0, str(current_dir / 'src'))
+sys.path.append('/app')  # Docker path
+sys.path.append('/app/src')  # Docker path
 
 # Import REAL DON Stack implementations
 try:
