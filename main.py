@@ -8,14 +8,17 @@ CONFIDENTIAL - DON Systems LLC
 Patent-protected technology - Do not distribute
 """
 
-from fastapi import FastAPI, HTTPException, Depends, Security
+from fastapi import FastAPI, HTTPException, Depends, Security, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.responses import JSONResponse, HTMLResponse
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 import os
 import logging
 import time
 import sys
+import numpy as np
+from time import perf_counter
 from pathlib import Path
 
 # Add DON Stack to path (works both locally and in Docker)
@@ -38,6 +41,91 @@ except ImportError as e:
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("DONStackAPI")
+
+HELP_PAGE_HTML = """<!DOCTYPE html>
+<html lang=\"en\">
+<head>
+    <meta charset=\"utf-8\">
+    <title>DON Stack Research API Help</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f7fb; color: #222; }
+        header { background: #11203f; color: #fff; padding: 24px; }
+        header h1 { margin: 0 0 8px 0; font-size: 26px; }
+        main { max-width: 960px; margin: 0 auto; padding: 32px 24px 48px 24px; }
+        section { background: #fff; border-radius: 8px; padding: 24px; margin-bottom: 24px; box-shadow: 0 8px 20px rgba(12, 30, 66, 0.08); }
+        h2 { margin-top: 0; color: #0b3d91; font-size: 20px; }
+        ol { padding-left: 20px; }
+        ul { padding-left: 20px; }
+        code { background: #eef1f7; padding: 2px 6px; border-radius: 4px; }
+        .contact { display: flex; flex-wrap: wrap; }
+        .contact div { margin-right: 24px; margin-bottom: 12px; }
+        footer { text-align: center; font-size: 12px; color: #4a5568; padding: 24px 0 16px 0; }
+        a { color: #0b3d91; text-decoration: none; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>DON Stack Research API Help</h1>
+        <p>Guidance for collaborating research teams (Texas A&amp;M Cai Lab and future partners).</p>
+    </header>
+    <main>
+        <section>
+            <h2>1. Access and Authentication</h2>
+            <ol>
+                <li>Request an institution token via <a href=\"mailto:research@donsystems.com\">research@donsystems.com</a>.</li>
+                <li>Include the token in every request header: <code>Authorization: Bearer &lt;institution_token&gt;</code>.</li>
+                <li>Respect hourly rate limits (Texas A&amp;M Cai Lab: 1000 requests/hour, demo access: 100 requests/hour).</li>
+            </ol>
+        </section>
+        <section>
+            <h2>2. Core API Workflow</h2>
+            <p>The service exposes REST endpoints documented at <a href=\"/docs\">/docs</a>. The primary genomics flow:</p>
+            <ol>
+                <li><strong>Prepare data:</strong> single-cell matrix, array of gene names, optional cell metadata.</li>
+                <li><strong>POST&nbsp;/api/v1/genomics/compress:</strong> specify <code>compression_target</code>, optional <code>seed</code> and <code>stabilize</code>.</li>
+                <li><strong>Inspect response:</strong> review <code>compressed_data</code>, <code>compression_stats</code>, and <code>algorithm</code> fields for audit trails.</li>
+            </ol>
+            <p>Additional endpoints:</p>
+            <ul>
+                <li><code>/api/v1/genomics/rag-optimize</code> &mdash; TACE-assisted retrieval tuning for embedding workflows.</li>
+                <li><code>/api/v1/quantum/stabilize</code> &mdash; QAC stabilization for quantum state vectors.</li>
+                <li><code>/api/v1/usage</code> &mdash; usage summary for your institution token.</li>
+            </ul>
+        </section>
+        <section>
+            <h2>3. Running Local Demonstrations</h2>
+            <ol>
+                <li>Activate the project virtual environment and launch the API: <code>python main.py</code>.</li>
+                <li>Start the interactive launcher: <code>python demos/demo_launcher.py</code>.</li>
+                <li>Select option 2 to run the DON-GPU compression demo. Choose the PBMC cohort size (small, medium, large) when prompted.</li>
+                <li>Results mirror the live API responses, providing compression metrics and biological summaries for presentations.</li>
+            </ol>
+        </section>
+        <section>
+            <h2>4. Best Practices for Research Teams</h2>
+            <ul>
+                <li>Store tokens securely and rotate them if team membership changes.</li>
+                <li>Log the <code>compression_stats</code> object for reproducibility and downstream analysis.</li>
+                <li>Leverage <code>seed</code> to obtain deterministic embeddings during collaborative experiments.</li>
+                <li>Use <code>stabilize=true</code> for runs that require quantum adjacency stabilization (longer runtimes).</li>
+            </ul>
+        </section>
+        <section>
+            <h2>5. Support</h2>
+            <div class=\"contact\">
+                <div><strong>Research Liaison:</strong><br><a href=\"mailto:research@donsystems.com\">research@donsystems.com</a></div>
+                <div><strong>Technical Support:</strong><br><a href=\"mailto:support@donsystems.com\">support@donsystems.com</a></div>
+                <div><strong>Collaboration Requests:</strong><br><a href=\"mailto:partnerships@donsystems.com\">partnerships@donsystems.com</a></div>
+            </div>
+            <p>Include institution name, contact, and use-case summary when requesting assistance.</p>
+        </section>
+    </main>
+    <footer>
+        &copy; 2024 DON Systems LLC. Proprietary technology. External distribution is prohibited.
+    </footer>
+</body>
+</html>"""
 
 app = FastAPI(
     title="DON Stack Research API",
@@ -81,7 +169,10 @@ class GenomicsData(BaseModel):
     
 class CompressionRequest(BaseModel):
     data: GenomicsData
-    compression_target: Optional[int] = Field(8, description="Target dimensions")
+    compression_target: Optional[int] = Field(32, description="Target dimensions")
+    params: Optional[Dict[str, Any]] = Field(None, description="Compression parameters")
+    seed: Optional[int] = Field(None, description="Random seed for reproducibility")
+    stabilize: Optional[bool] = Field(False, description="Apply quantum stabilization")
     
 class RAGOptimizationRequest(BaseModel):
     query_embeddings: List[List[float]] = Field(..., description="Query vectors")
@@ -113,6 +204,10 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Security(security))
     tracker["count"] += 1
     return AUTHORIZED_INSTITUTIONS[token]
 
+# QAC router - import and include with authentication
+from src.qac.routes import router as qac_router
+app.include_router(qac_router, dependencies=[Depends(verify_token)])
+
 # Fallback implementations for when DON Stack isn't available
 def fallback_compress(data: List[float], target_dims: int = 8) -> List[float]:
     """Fallback: Simple dimensionality reduction"""
@@ -143,6 +238,67 @@ def fallback_tune_alpha(tensions: List[float], default_alpha: float) -> float:
     alpha_adjustment = (tension_mean - 0.5) * 0.1
     return float(np.clip(default_alpha + alpha_adjustment, 0.1, 0.9))
 
+def don_gpu_embed(X: np.ndarray, k: int, seed: Optional[int] = None, stabilize: bool = False) -> np.ndarray:
+    """DON-GPU embedding that respects k parameter"""
+    if seed is not None:
+        np.random.seed(seed)
+    
+    cells, genes = X.shape if X.ndim == 2 else (0, 0)
+    if cells == 0 or genes == 0:
+        return np.zeros((cells, k))
+    
+    if REAL_DON_STACK:
+        # Use REAL DON Stack compression
+        compressed_profiles = []
+        for cell_profile in X:
+            compressed_result = don_adapter.normalize(cell_profile)
+            
+            # Flatten the result if it's nested (DON-GPU returns nested lists)
+            if hasattr(compressed_result, 'tolist'):
+                result_list = compressed_result.tolist()
+            elif isinstance(compressed_result, (list, tuple)):
+                result_list = list(compressed_result)
+            else:
+                result_list = [float(compressed_result)] if compressed_result is not None else []
+            
+            # Flatten nested structure if needed
+            def flatten(lst):
+                flattened = []
+                for item in lst:
+                    if isinstance(item, (list, tuple)):
+                        flattened.extend(flatten(item))
+                    else:
+                        flattened.append(float(item))
+                return flattened
+            
+            compressed = flatten(result_list)
+            
+            # Pad or trim to target k
+            if len(compressed) < k:
+                compressed.extend([0.0] * (k - len(compressed)))
+            elif len(compressed) > k:
+                compressed = compressed[:k]
+            
+            compressed_profiles.append(compressed)
+        
+        Z = np.array(compressed_profiles)
+        
+        # Apply stabilization if requested
+        if stabilize and REAL_DON_STACK:
+            for i in range(Z.shape[0]):
+                stabilized_result = don_adapter.normalize(Z[i])
+                if hasattr(stabilized_result, 'tolist'):
+                    Z[i] = stabilized_result.tolist()[:k]
+        
+        return Z
+    else:
+        # Fallback: use simple dimensionality reduction
+        Z = np.zeros((cells, k))
+        for i, cell_profile in enumerate(X):
+            compressed = fallback_compress(cell_profile.tolist(), k)
+            Z[i, :len(compressed)] = compressed[:k]
+        return Z
+
 @app.get("/")
 async def root():
     return {
@@ -152,12 +308,21 @@ async def root():
         "description": "Quantum-enhanced data processing for genomics research",
         "contact": "research@donsystems.com",
         "don_stack_status": "REAL" if REAL_DON_STACK else "FALLBACK",
-        "note": "Private deployment with proprietary DON Stack implementations"
+        "note": "Private deployment with proprietary DON Stack implementations",
+        "help_url": "/help"
     }
+
+
+@app.get("/help", response_class=HTMLResponse)
+async def help_page():
+    """Serve a researcher-facing help page without exposing IP details."""
+    return HTMLResponse(content=HELP_PAGE_HTML)
 
 @app.get("/api/v1/health")
 async def health_check():
     """Public health check endpoint"""
+    from src.qac.tasks import HAVE_REAL_QAC, DEFAULT_ENGINE
+    
     return {
         "status": "healthy",
         "don_stack": {
@@ -167,12 +332,16 @@ async def health_check():
             "qac": REAL_DON_STACK,
             "adapter_loaded": don_adapter is not None
         },
+        "qac": {
+            "supported_engines": ["real_qac", "laplace"] if HAVE_REAL_QAC else ["laplace"],
+            "default_engine": DEFAULT_ENGINE if HAVE_REAL_QAC else "laplace"
+        },
         "timestamp": time.time()
     }
 
 @app.post("/api/v1/genomics/compress")
 async def compress_genomics_data(
-    request: CompressionRequest,
+    request: Request,
     institution: dict = Depends(verify_token)
 ):
     """
@@ -182,45 +351,85 @@ async def compress_genomics_data(
     try:
         logger.info(f"Genomics compression request from {institution['name']}")
         
-        compressed_profiles = []
-        original_dims = len(request.data.expression_matrix[0]) if request.data.expression_matrix else 0
+        # Parse request body
+        body = await request.json()
         
-        for cell_profile in request.data.expression_matrix:
-            if REAL_DON_STACK:
-                # Use REAL DON Stack compression
-                compressed_result = don_adapter.normalize(cell_profile)
-                # Convert to list and ensure we get the target dimensions
-                if hasattr(compressed_result, 'tolist'):
-                    compressed = compressed_result.tolist()
-                elif isinstance(compressed_result, (list, tuple)):
-                    compressed = list(compressed_result)
-                else:
-                    compressed = [float(compressed_result)] if compressed_result is not None else []
-                
-                # Trim to target dimensions
-                if len(compressed) > request.compression_target:
-                    compressed = compressed[:request.compression_target]
-            else:
-                # Use fallback
-                compressed = fallback_compress(cell_profile, request.compression_target)
-            
-            compressed_profiles.append(compressed)
-        
-        compression_ratio = original_dims / len(compressed_profiles[0]) if compressed_profiles else 1
-        
-        return {
-            "compressed_data": compressed_profiles,
-            "gene_names": request.data.gene_names,
-            "metadata": request.data.cell_metadata,
+        data = body.get("data", {})
+        X = np.array(data.get("expression_matrix", []), dtype=float)
+        gene_names = data.get("gene_names", [])
+        cells, genes = X.shape if X.ndim == 2 else (0, 0)
+
+        req_k = int(body.get("compression_target", 32))
+        params = body.get("params") or {}
+        mode = params.get("mode", "auto_evr")          # "auto_evr" | "fixed_k"
+        evr_target = float(params.get("evr_target", 0.95))
+        max_k = int(params.get("max_k", 64))
+
+        seed = body.get("seed")
+        stabilize = bool(body.get("stabilize", False))
+
+        # caps
+        rank = int(np.linalg.matrix_rank(X)) if cells and genes else 0
+        cap = max(1, min(rank or 1, genes or 1, max_k or 1))
+
+        # choose k
+        if mode == "fixed_k":
+            k = max(1, min(req_k, cap))
+        else:
+            # auto by EVR
+            Xc = X - X.mean(axis=0, keepdims=True)
+            _, s, _ = np.linalg.svd(Xc, full_matrices=False)
+            energy = (s ** 2)
+            evr = energy / energy.sum() if energy.sum() > 0 else energy
+            cum = np.cumsum(evr) if evr.size else np.array([1.0])
+            k_evr = int(np.searchsorted(cum, min(max(evr_target, 0.5), 0.999999)) + 1)
+            k = max(1, min(k_evr, req_k, cap))
+
+        t0 = perf_counter()
+
+        # --- call DON-GPU embedding; must accept k ---
+        # Z should be (cells, k). If your current core returns 1-D, we expand with SVD fallback.
+        Z = don_gpu_embed(X, k=k, seed=seed, stabilize=stabilize)
+
+        Z = np.asarray(Z)
+        if Z.ndim == 1:  # shape: (cells,)
+            Z = Z.reshape(-1, 1)
+
+        if Z.shape[1] < k and k > 1:
+            # fallback: add remaining components from SVD to honor requested k
+            Xc = X - X.mean(axis=0, keepdims=True)
+            U, s, _ = np.linalg.svd(Xc, full_matrices=False)
+            add = min(k - Z.shape[1], U.shape[1])
+            if add > 0:
+                Z = np.concatenate([Z, U[:, :add] * s[:add]], axis=1)
+
+        runtime_ms = int((perf_counter() - t0) * 1000)
+
+        achieved_k = int(Z.shape[1])
+        resp = {
+            "compressed_data": Z.tolist(),
+            "gene_names": gene_names,
+            "metadata": data.get("cell_metadata"),
             "compression_stats": {
-                "original_dimensions": original_dims,
-                "compressed_dimensions": len(compressed_profiles[0]) if compressed_profiles else 0,
-                "compression_ratio": f"{compression_ratio:.1f}×",
-                "cells_processed": len(compressed_profiles)
+                "original_dimensions": int(genes),
+                "compressed_dimensions": achieved_k,
+                "requested_k": int(req_k),
+                "achieved_k": achieved_k,
+                "rank": int(rank),
+                "compression_ratio": f"{genes / float(max(1, achieved_k)):.1f}×",
+                "cells_processed": int(cells),
+                "evr_target": float(evr_target),
+                "mode": mode,
+                "max_k": int(max_k),
+                "rank_cap_reason": f"min(n_cells={cells}, n_genes={genes}, rank={rank}, max_k={max_k})"
             },
             "algorithm": "DON-GPU Fractal Clustering (REAL)" if REAL_DON_STACK else "Fallback Compression",
-            "institution": institution["name"]
+            "institution": institution["name"],
+            "runtime_ms": runtime_ms,
+            "seed": seed,
+            "stabilize": stabilize
         }
+        return JSONResponse(resp)
         
     except Exception as e:
         logger.error(f"Compression failed: {e}")

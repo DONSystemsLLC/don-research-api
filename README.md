@@ -4,7 +4,7 @@
 
 [![Deploy](https://img.shields.io/badge/Deploy-Render-brightgreen)](https://render.com)
 [![API](https://img.shields.io/badge/API-FastAPI-blue)](https://fastapi.tiangolo.com)
-[![License](https://img.shields.io/badge/License-Proprietary-red)](LICENSE)
+[![License](https://img.shields.io/badge/License-Proprietary-red)](#license)
 
 ## Overview
 
@@ -111,6 +111,30 @@ See `examples/` directory for:
 - RAG system optimization for PubMed queries
 - Quantum state analysis for molecular simulations
 
+### Interactive Demo Launcher
+
+Run the guided showcase from the project root:
+
+```bash
+python demos/demo_launcher.py
+```
+
+When you choose **Option 2 – Basic Genomics Compression Demo**, the launcher now prompts you to select which real PBMC cohort to use. The tiers map to verified datasets bundled with the repo:
+
+| Tier  | Cells × Genes | Source File                                  |
+|-------|---------------|----------------------------------------------|
+| Small | 100 × 100     | `real_pbmc_small.json`                       |
+| Medium| 250 × 500     | `real_pbmc_medium_correct.json`              |
+| Large | 500 × 1000    | `real_pbmc_data.json`                        |
+
+You can also bypass the prompt by setting `DON_BASIC_DEMO_DATASET` (`small`, `medium`, or `large`) or by passing the size directly to the demo module:
+
+```bash
+python demos/quick/basic_compression_demo.py medium
+```
+
+For a browser-friendly walkthrough aimed at collaborating labs, visit the new help tab once the API server is running: [http://localhost:8080/help](http://localhost:8080/help).
+
 ## Deployment
 
 ### Render.com (Recommended)
@@ -123,14 +147,16 @@ See `examples/` directory for:
    - Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
 
 3. **Environment Variables**:
-   ```
-   PYTHON_VERSION=3.11
-   PORT=8080
-   ```
+
+    ```env
+    PYTHON_VERSION=3.11
+    PORT=8080
+    ```
 
 4. **Deploy**: Automatic deployment on git push
 
 ### Docker Deployment
+
 ```dockerfile
 FROM python:3.11-slim
 
@@ -144,7 +170,16 @@ EXPOSE 8080
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
 ```
 
+## Research Collaboration
+
+### Texas A&M University - Cai Lab
+
+**Principal Investigator**: Professor James J. Cai  
+**Focus**: Quantum computing applications in single-cell biology  
+**Contact**: [jcai@tamu.edu](mailto:jcai@tamu.edu)
+
 ### Collaboration Benefits
+
 - Access to cutting-edge quantum-enhanced algorithms
 - Reduced computational costs for large-scale genomics
 - Joint research publication opportunities
@@ -153,17 +188,20 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
 ## Technical Specifications
 
 ### DON Stack Components
+
 - **DON-GPU**: Fractal clustering with 4×-32× compression
 - **QAC**: Quantum Adjacency Code error correction
 - **TACE**: Temporal Adjacency Collapse Engine control
 
 ### Performance Metrics
+
 - **Compression Ratio**: Up to 32× reduction
 - **Processing Speed**: Real-time for datasets <10GB
 - **Accuracy Preservation**: >95% fidelity
 - **Quantum Coherence**: >95% stability
 
 ### Rate Limits
+
 - **Academic Institutions**: 1,000 requests/hour
 - **Demo Access**: 100 requests/hour
 - **Enterprise**: Custom limits available
@@ -180,22 +218,23 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
 
 ## Support
 
-- 📧 **Research Inquiries**: research@donsystems.com
-- 🐛 **Technical Issues**: support@donsystems.com
+- 📧 **Research Inquiries**: [research@donsystems.com](mailto:research@donsystems.com)
+- 🐛 **Technical Issues**: [support@donsystems.com](mailto:support@donsystems.com)
 - 📖 **Documentation**: [API Docs](https://your-deployment.onrender.com/docs)
-- 💬 **Collaboration**: partnerships@donsystems.com
+- 💬 **Collaboration**: [partnerships@donsystems.com](mailto:partnerships@donsystems.com)
 
 ## License
 
-**Proprietary Software - DON Systems LLC**
+### Proprietary Software - DON Systems LLC
 
 This software contains patent-protected algorithms and is provided under restricted license for authorized research institutions only. Distribution, modification, or commercial use is strictly prohibited without explicit written permission.
 
-**Patents Pending**:
+### Patents Pending
+
 - Fractal Clustering Algorithm (DON-GPU)
 - Quantum Adjacency Code (QAC)
 - Temporal Adjacency Collapse Engine (TACE)
 
 ---
 
-*© 2024 DON Systems LLC. All rights reserved.*# Render deploy trigger
+*© 2024 DON Systems LLC. All rights reserved.*

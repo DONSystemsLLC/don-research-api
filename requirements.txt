@@ -5,3 +5,7 @@ pydantic==2.10.2
 typing-extensions==4.12.2
 jax==0.4.35
 jaxlib==0.4.35
+scipy==1.14.1
+redis==5.0.8
+requests==2.32.3
+celery==5.4.0
