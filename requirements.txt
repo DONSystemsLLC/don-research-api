@@ -17,6 +17,8 @@ scikit-learn==1.5.2
 faiss-cpu==1.12.0
 matplotlib==3.9.2
 networkx==3.4.1
+python-igraph==0.11.8
+leidenalg==0.10.2
 pytest==8.3.3
 pytest-asyncio==0.24.0
 httpx==0.27.2
