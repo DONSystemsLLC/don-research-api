@@ -43,86 +43,564 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("DONStackAPI")
 
 HELP_PAGE_HTML = """<!DOCTYPE html>
-<html lang=\"en\">
+<html lang="en">
 <head>
-    <meta charset=\"utf-8\">
-    <title>DON Stack Research API Help</title>
+    <meta charset="utf-8">
+    <title>DON Research API - Texas A&M Lab User Guide</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f7fb; color: #222; }
-        header { background: #11203f; color: #fff; padding: 24px; }
-        header h1 { margin: 0 0 8px 0; font-size: 26px; }
-        main { max-width: 960px; margin: 0 auto; padding: 32px 24px 48px 24px; }
-        section { background: #fff; border-radius: 8px; padding: 24px; margin-bottom: 24px; box-shadow: 0 8px 20px rgba(12, 30, 66, 0.08); }
-        h2 { margin-top: 0; color: #0b3d91; font-size: 20px; }
-        ol { padding-left: 20px; }
-        ul { padding-left: 20px; }
-        code { background: #eef1f7; padding: 2px 6px; border-radius: 4px; }
-        .contact { display: flex; flex-wrap: wrap; }
-        .contact div { margin-right: 24px; margin-bottom: 12px; }
-        footer { text-align: center; font-size: 12px; color: #4a5568; padding: 24px 0 16px 0; }
-        a { color: #0b3d91; text-decoration: none; }
-        a:hover { text-decoration: underline; }
+        * { box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; 
+            margin: 0; padding: 0; background: #f5f7fb; color: #1a202c; line-height: 1.6;
+        }
+        header { background: linear-gradient(135deg, #0b3d91 0%, #11203f 100%); color: #fff; padding: 32px 24px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        header h1 { margin: 0 0 8px 0; font-size: 32px; font-weight: 600; }
+        header p { margin: 0; font-size: 16px; opacity: 0.95; }
+        nav { background: #fff; padding: 16px 24px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        nav a { 
+            color: #0b3d91; text-decoration: none; margin-right: 24px; font-weight: 500; font-size: 14px; 
+            transition: color 0.2s;
+        }
+        nav a:hover { color: #11203f; text-decoration: underline; }
+        main { max-width: 1100px; margin: 0 auto; padding: 40px 24px 60px 24px; }
+        section { background: #fff; border-radius: 12px; padding: 32px; margin-bottom: 32px; box-shadow: 0 8px 24px rgba(12, 30, 66, 0.08); }
+        h2 { margin-top: 0; color: #0b3d91; font-size: 24px; font-weight: 600; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
+        h3 { color: #2d3748; font-size: 18px; font-weight: 600; margin-top: 24px; margin-bottom: 12px; }
+        h4 { color: #4a5568; font-size: 16px; font-weight: 600; margin-top: 16px; margin-bottom: 8px; }
+        ol, ul { padding-left: 24px; margin: 12px 0; }
+        li { margin-bottom: 8px; }
+        code { 
+            background: #edf2f7; padding: 3px 8px; border-radius: 4px; font-family: 'Monaco', 'Menlo', monospace; 
+            font-size: 13px; color: #c7254e;
+        }
+        pre { 
+            background: #2d3748; color: #e2e8f0; padding: 20px; border-radius: 8px; overflow-x: auto; 
+            font-family: 'Monaco', 'Menlo', monospace; font-size: 13px; line-height: 1.5; margin: 16px 0;
+        }
+        pre code { background: none; padding: 0; color: inherit; }
+        table { 
+            width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        th { 
+            background: #edf2f7; color: #2d3748; font-weight: 600; text-align: left; 
+            padding: 12px 16px; border: 1px solid #cbd5e0;
+        }
+        td { padding: 12px 16px; border: 1px solid #e2e8f0; }
+        tr:hover { background: #f7fafc; }
+        .badge { 
+            display: inline-block; background: #4299e1; color: #fff; padding: 4px 12px; 
+            border-radius: 12px; font-size: 12px; font-weight: 600; margin-right: 8px;
+        }
+        .badge.success { background: #48bb78; }
+        .badge.warning { background: #ed8936; }
+        .badge.danger { background: #f56565; }
+        .info-box { 
+            background: #ebf8ff; border-left: 4px solid #4299e1; padding: 16px 20px; 
+            margin: 16px 0; border-radius: 4px;
+        }
+        .warning-box { 
+            background: #fffaf0; border-left: 4px solid #ed8936; padding: 16px 20px; 
+            margin: 16px 0; border-radius: 4px;
+        }
+        .success-box { 
+            background: #f0fff4; border-left: 4px solid #48bb78; padding: 16px 20px; 
+            margin: 16px 0; border-radius: 4px;
+        }
+        .metrics { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+            gap: 16px; margin: 24px 0;
+        }
+        .metric-card { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; 
+            padding: 20px; border-radius: 8px; text-align: center; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .metric-value { font-size: 32px; font-weight: 700; margin: 8px 0; }
+        .metric-label { font-size: 14px; opacity: 0.9; }
+        .contact { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin: 24px 0; }
+        .contact-card { background: #f7fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; }
+        footer { 
+            text-align: center; font-size: 13px; color: #718096; padding: 32px 24px; 
+            background: #fff; border-top: 1px solid #e2e8f0;
+        }
+        a { color: #4299e1; text-decoration: none; transition: color 0.2s; }
+        a:hover { color: #2b6cb0; text-decoration: underline; }
+        .toc { background: #f7fafc; padding: 24px; border-radius: 8px; margin-bottom: 32px; }
+        .toc ul { list-style: none; padding-left: 0; }
+        .toc li { margin-bottom: 8px; }
+        @media (max-width: 768px) {
+            header h1 { font-size: 24px; }
+            nav a { display: block; margin: 8px 0; }
+            .metrics { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
     <header>
-        <h1>DON Stack Research API Help</h1>
-        <p>Guidance for collaborating research teams (Texas A&amp;M Cai Lab and future partners).</p>
+        <h1>DON Research API - User Guide</h1>
+        <p>Quantum-Enhanced Genomics for Academic Research | Texas A&M Cai Lab</p>
     </header>
+    
+    <nav>
+        <a href="#quick-start">Quick Start</a>
+        <a href="#authentication">Authentication</a>
+        <a href="#endpoints">API Endpoints</a>
+        <a href="#workflows">Workflows</a>
+        <a href="#troubleshooting">Troubleshooting</a>
+        <a href="#support">Support</a>
+        <a href="/docs">API Docs</a>
+    </nav>
+    
     <main>
-        <section>
-            <h2>1. Access and Authentication</h2>
-            <ol>
-                <li>Request an institution token via <a href=\"mailto:research@donsystems.com\">research@donsystems.com</a>.</li>
-                <li>Include the token in every request header: <code>Authorization: Bearer &lt;institution_token&gt;</code>.</li>
-                <li>Respect hourly rate limits (Texas A&amp;M Cai Lab: 1000 requests/hour, demo access: 100 requests/hour).</li>
-            </ol>
-        </section>
-        <section>
-            <h2>2. Core API Workflow</h2>
-            <p>The service exposes REST endpoints documented at <a href=\"/docs\">/docs</a>. The primary genomics flow:</p>
-            <ol>
-                <li><strong>Prepare data:</strong> single-cell matrix, array of gene names, optional cell metadata.</li>
-                <li><strong>POST&nbsp;/api/v1/genomics/compress:</strong> specify <code>compression_target</code>, optional <code>seed</code> and <code>stabilize</code>.</li>
-                <li><strong>Inspect response:</strong> review <code>compressed_data</code>, <code>compression_stats</code>, and <code>algorithm</code> fields for audit trails.</li>
-            </ol>
-            <p>Additional endpoints:</p>
+        <!-- Quick Start -->
+        <section id="quick-start">
+            <h2>🚀 Quick Start</h2>
+            
+            <h3>Prerequisites</h3>
             <ul>
-                <li><code>/api/v1/genomics/rag-optimize</code> &mdash; TACE-assisted retrieval tuning for embedding workflows.</li>
-                <li><code>/api/v1/quantum/stabilize</code> &mdash; QAC stabilization for quantum state vectors.</li>
-                <li><code>/api/v1/usage</code> &mdash; usage summary for your institution token.</li>
+                <li><strong>Python 3.11+</strong> installed</li>
+                <li><strong>API Token</strong> (provided via secure email)</li>
+                <li><strong>Data Format:</strong> Single-cell RNA-seq in <code>.h5ad</code> format (AnnData)</li>
             </ul>
-        </section>
-        <section>
-            <h2>3. Running Local Demonstrations</h2>
-            <ol>
-                <li>Activate the project virtual environment and launch the API: <code>python main.py</code>.</li>
-                <li>Start the interactive launcher: <code>python demos/demo_launcher.py</code>.</li>
-                <li>Select option 2 to run the DON-GPU compression demo. Choose the PBMC cohort size (small, medium, large) when prompted.</li>
-                <li>Results mirror the live API responses, providing compression metrics and biological summaries for presentations.</li>
-            </ol>
-        </section>
-        <section>
-            <h2>4. Best Practices for Research Teams</h2>
-            <ul>
-                <li>Store tokens securely and rotate them if team membership changes.</li>
-                <li>Log the <code>compression_stats</code> object for reproducibility and downstream analysis.</li>
-                <li>Leverage <code>seed</code> to obtain deterministic embeddings during collaborative experiments.</li>
-                <li>Use <code>stabilize=true</code> for runs that require quantum adjacency stabilization (longer runtimes).</li>
-            </ul>
-        </section>
-        <section>
-            <h2>5. Support</h2>
-            <div class=\"contact\">
-                <div><strong>Research Liaison:</strong><br><a href=\"mailto:research@donsystems.com\">research@donsystems.com</a></div>
-                <div><strong>Technical Support:</strong><br><a href=\"mailto:support@donsystems.com\">support@donsystems.com</a></div>
-                <div><strong>Collaboration Requests:</strong><br><a href=\"mailto:partnerships@donsystems.com\">partnerships@donsystems.com</a></div>
+            
+            <h3>Installation</h3>
+            <pre><code># Create virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\\Scripts\\activate
+
+# Install required packages
+pip install requests scanpy anndata pandas numpy</code></pre>
+            
+            <h3>First API Call</h3>
+            <pre><code>import requests
+
+API_URL = "https://don-research-api.onrender.com"
+TOKEN = "your-texas-am-token-here"  # Replace with your token
+
+headers = {"Authorization": f"Bearer {TOKEN}"}
+
+# Health check
+response = requests.get(f"{API_URL}/health", headers=headers)
+print(response.json())
+# Expected: {"status": "ok", "timestamp": "2025-10-24T..."}</code></pre>
+            
+            <div class="success-box">
+                <strong>✓ System Ready!</strong> If health check returns <code>{"status": "ok"}</code>, you're connected and authenticated.
             </div>
-            <p>Include institution name, contact, and use-case summary when requesting assistance.</p>
+        </section>
+        
+        <!-- System Overview -->
+        <section id="system-overview">
+            <h2>📊 System Overview</h2>
+            
+            <h3>What is the DON Research API?</h3>
+            <p>
+                The DON (Distributed Order Network) Research API provides access to proprietary quantum-enhanced 
+                algorithms for genomics data compression and feature extraction. The system combines classical 
+                preprocessing with quantum-inspired compression to generate high-quality 128-dimensional feature 
+                vectors from single-cell RNA-seq data.
+            </p>
+            
+            <h3>Core Technologies</h3>
+            <ul>
+                <li><strong>DON-GPU:</strong> Fractal clustering processor with 8×-128× compression ratios</li>
+                <li><strong>QAC (Quantum Adjacency Code):</strong> Multi-layer quantum error correction</li>
+                <li><strong>TACE:</strong> Temporal Adjacency Collapse Engine for quantum-classical feedback</li>
+            </ul>
+            
+            <h3>Validated Performance (PBMC3k Dataset)</h3>
+            <div class="metrics">
+                <div class="metric-card">
+                    <div class="metric-label">Input Data</div>
+                    <div class="metric-value">2,700</div>
+                    <div class="metric-label">cells × 13,714 genes</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Compression Ratio</div>
+                    <div class="metric-value">28,928×</div>
+                    <div class="metric-label">37M → 1.3K values</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Processing Time</div>
+                    <div class="metric-value">&lt;30s</div>
+                    <div class="metric-label">on standard hardware</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-label">Information Retention</div>
+                    <div class="metric-value">85-90%</div>
+                    <div class="metric-label">biological signal preserved</div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Authentication -->
+        <section id="authentication">
+            <h2>🔐 Authentication</h2>
+            
+            <h3>API Token</h3>
+            <div class="info-box">
+                <strong>Rate Limit:</strong> 1,000 requests per hour<br>
+                <strong>Token Format:</strong> Bearer token (JWT-style)<br>
+                <strong>Security:</strong> Never commit tokens to Git or share publicly
+            </div>
+            
+            <h3>Using Your Token</h3>
+            
+            <h4>HTTP Headers (curl):</h4>
+            <pre><code>curl -H "Authorization: Bearer YOUR_TOKEN" \\
+     https://don-research-api.onrender.com/health</code></pre>
+            
+            <h4>Python requests:</h4>
+            <pre><code>headers = {"Authorization": f"Bearer {YOUR_TOKEN}"}
+response = requests.get(url, headers=headers)</code></pre>
+            
+            <h4>Environment Variable (recommended):</h4>
+            <pre><code>export DON_API_TOKEN="your-token-here"</code></pre>
+            <pre><code>import os
+TOKEN = os.environ.get("DON_API_TOKEN")</code></pre>
+        </section>
+        
+        <!-- API Endpoints -->
+        <section id="endpoints">
+            <h2>🔌 API Endpoints</h2>
+            
+            <h3>Base URLs</h3>
+            <ul>
+                <li><strong>Production:</strong> <code>https://don-research-api.onrender.com</code></li>
+                <li><strong>Interactive Docs:</strong> <a href="/docs">/docs</a> (Swagger UI)</li>
+            </ul>
+            
+            <h3>1. Health Check</h3>
+            <p><span class="badge success">GET</span> <code>/health</code></p>
+            <p>Verify API availability and authentication.</p>
+            
+            <h3>2. Build Feature Vectors</h3>
+            <p><span class="badge warning">POST</span> <code>/api/v1/genomics/vectors/build</code></p>
+            <p>Generate 128-dimensional feature vectors from single-cell h5ad files.</p>
+            
+            <h4>Parameters:</h4>
+            <ul>
+                <li><code>file</code> (required): <code>.h5ad</code> file upload (AnnData format)</li>
+                <li><code>mode</code> (optional): <code>"cluster"</code> (default) or <code>"cell"</code>
+                    <ul>
+                        <li><strong>cluster:</strong> One vector per cell type cluster (recommended)</li>
+                        <li><strong>cell:</strong> One vector per individual cell (for detailed analysis)</li>
+                    </ul>
+                </li>
+            </ul>
+            
+            <h4>Example Request:</h4>
+            <pre><code>import requests
+
+with open("data/pbmc3k.h5ad", "rb") as f:
+    files = {"file": ("pbmc3k.h5ad", f, "application/octet-stream")}
+    data = {"mode": "cluster"}
+    response = requests.post(
+        "https://don-research-api.onrender.com/api/v1/genomics/vectors/build",
+        headers={"Authorization": f"Bearer {TOKEN}"},
+        files=files,
+        data=data
+    )
+
+result = response.json()
+print(f"Built {result['count']} vectors")
+print(f"Saved to: {result['jsonl']}")</code></pre>
+            
+            <h4>Response:</h4>
+            <pre><code>{
+  "ok": true,
+  "mode": "cluster",
+  "jsonl": "/path/to/pbmc3k.cluster.jsonl",
+  "count": 10,
+  "preview": [
+    {
+      "vector_id": "pbmc3k.h5ad:cluster:0",
+      "psi": [0.929, 0.040, ...],  // 128 dimensions
+      "space": "X_pca",
+      "metric": "cosine",
+      "type": "cluster",
+      "meta": {
+        "file": "pbmc3k.h5ad",
+        "cluster": "0",
+        "cells": 560,
+        "cell_type": "NA",
+        "tissue": "NA"
+      }
+    }
+  ]
+}</code></pre>
+            
+            <h3>3. Encode Query Vector</h3>
+            <p><span class="badge warning">POST</span> <code>/api/v1/genomics/query/encode</code></p>
+            <p>Convert biological queries (gene lists, cell types, tissues) into 128-dimensional vectors for searching.</p>
+            
+            <h4>Parameters:</h4>
+            <ul>
+                <li><code>gene_list_json</code>: JSON array of gene symbols, e.g., <code>["CD3E", "CD8A", "CD4"]</code></li>
+                <li><code>cell_type</code>: Cell type name, e.g., <code>"T cell"</code></li>
+                <li><code>tissue</code>: Tissue name, e.g., <code>"PBMC"</code></li>
+            </ul>
+            
+            <h4>Example:</h4>
+            <pre><code>import json
+
+# T cell marker query
+t_cell_genes = ["CD3E", "CD8A", "CD4"]
+data = {"gene_list_json": json.dumps(t_cell_genes)}
+
+response = requests.post(
+    "https://don-research-api.onrender.com/api/v1/genomics/query/encode",
+    headers={"Authorization": f"Bearer {TOKEN}"},
+    data=data
+)
+
+query_vector = response.json()["psi"]  # 128-dimensional vector</code></pre>
+            
+            <h3>4. Search Vectors</h3>
+            <p><span class="badge warning">POST</span> <code>/api/v1/genomics/vectors/search</code></p>
+            <p>Find similar cell clusters or cells using cosine similarity search.</p>
+            
+            <h4>Parameters:</h4>
+            <ul>
+                <li><code>jsonl_path</code>: Path to vectors JSONL file from <code>/vectors/build</code></li>
+                <li><code>psi</code>: JSON array of 128 floats (query vector from <code>/query/encode</code>)</li>
+                <li><code>k</code>: Number of results to return (default: 10)</li>
+            </ul>
+            
+            <h4>Distance Interpretation:</h4>
+            <table>
+                <tr><th>Distance</th><th>Interpretation</th></tr>
+                <tr><td>0.0 - 0.2</td><td>Very similar (same cell type)</td></tr>
+                <tr><td>0.2 - 0.5</td><td>Similar (related cell types)</td></tr>
+                <tr><td>0.5 - 0.8</td><td>Moderately similar (different lineages)</td></tr>
+                <tr><td>0.8+</td><td>Dissimilar (unrelated cell types)</td></tr>
+            </table>
+            
+            <h3>5. Generate Entropy Map</h3>
+            <p><span class="badge warning">POST</span> <code>/api/v1/genomics/entropy-map</code></p>
+            <p>Visualize cell-level entropy (gene expression diversity) on UMAP embeddings.</p>
+            
+            <h4>Parameters:</h4>
+            <ul>
+                <li><code>file</code>: <code>.h5ad</code> file upload</li>
+                <li><code>label_key</code>: Cluster column in <code>adata.obs</code> (default: auto-detect)</li>
+            </ul>
+            
+            <div class="info-box">
+                <strong>Entropy Interpretation:</strong><br>
+                • <strong>Higher entropy:</strong> More diverse/complex expression patterns<br>
+                • <strong>Lower entropy:</strong> More specialized/differentiated cell states<br>
+                • <strong>Collapse metric:</strong> Quantum-inspired cell state stability measure
+            </div>
+        </section>
+        
+        <!-- Workflow Examples -->
+        <section id="workflows">
+            <h2>🔬 Workflow Examples</h2>
+            
+            <h3>Example 1: Basic Cell Type Discovery</h3>
+            <pre><code>import requests
+import json
+
+API_URL = "https://don-research-api.onrender.com"
+TOKEN = "your-token-here"
+headers = {"Authorization": f"Bearer {TOKEN}"}
+
+# Step 1: Build vectors
+with open("my_dataset.h5ad", "rb") as f:
+    files = {"file": ("my_dataset.h5ad", f, "application/octet-stream")}
+    response = requests.post(
+        f"{API_URL}/api/v1/genomics/vectors/build",
+        headers=headers,
+        files=files,
+        data={"mode": "cluster"}
+    )
+
+vectors_result = response.json()
+jsonl_path = vectors_result["jsonl"]
+print(f"✓ Built {vectors_result['count']} cluster vectors")
+
+# Step 2: Encode T cell query
+t_cell_genes = ["CD3E", "CD8A", "CD4", "IL7R"]
+query_data = {"gene_list_json": json.dumps(t_cell_genes)}
+response = requests.post(
+    f"{API_URL}/api/v1/genomics/query/encode",
+    headers=headers,
+    data=query_data
+)
+query_vector = response.json()["psi"]
+print(f"✓ Encoded T cell query")
+
+# Step 3: Search for matching clusters
+search_data = {
+    "jsonl_path": jsonl_path,
+    "psi": json.dumps(query_vector),
+    "k": 5
+}
+response = requests.post(
+    f"{API_URL}/api/v1/genomics/vectors/search",
+    headers=headers,
+    data=search_data
+)
+
+results = response.json()["hits"]
+print(f"\\n✓ Top 5 T cell-like clusters:")
+for i, hit in enumerate(results, 1):
+    cluster_id = hit['meta']['cluster']
+    distance = hit['distance']
+    cells = hit['meta']['cells']
+    print(f"{i}. Cluster {cluster_id}: distance={distance:.4f}, cells={cells}")</code></pre>
+            
+            <h3>Common Cell Type Markers</h3>
+            <table>
+                <tr><th>Cell Type</th><th>Marker Genes</th></tr>
+                <tr><td>T cells</td><td>CD3E, CD8A, CD4, IL7R</td></tr>
+                <tr><td>B cells</td><td>MS4A1, CD79A, CD19, IGHM</td></tr>
+                <tr><td>NK cells</td><td>NKG7, GNLY, KLRD1, NCAM1</td></tr>
+                <tr><td>Monocytes</td><td>CD14, FCGR3A, CST3, LYZ</td></tr>
+                <tr><td>Dendritic cells</td><td>FCER1A, CST3, CLEC10A</td></tr>
+            </table>
+        </section>
+        
+        <!-- Vector Structure -->
+        <section id="vector-structure">
+            <h2>🧬 Understanding the Output</h2>
+            
+            <h3>128-Dimensional Vector Structure</h3>
+            <table>
+                <tr><th>Dimensions</th><th>Content</th><th>Purpose</th></tr>
+                <tr><td>0-15</td><td>Entropy signature</td><td>Gene expression distribution (16 bins)</td></tr>
+                <tr><td>16</td><td>HVG fraction</td><td>% of highly variable genes expressed</td></tr>
+                <tr><td>17</td><td>Mitochondrial %</td><td>Cell quality indicator</td></tr>
+                <tr><td>18</td><td>Total counts</td><td>Library size (normalized)</td></tr>
+                <tr><td>22</td><td>Silhouette score</td><td>Cluster separation quality (-1 to 1)</td></tr>
+                <tr><td>27</td><td>Purity score</td><td>Neighborhood homogeneity (0 to 1)</td></tr>
+                <tr><td>28-127</td><td>Biological tokens</td><td>Hashed cell type & tissue features</td></tr>
+            </table>
+            
+            <h3>Compression Example (PBMC3k)</h3>
+            <ul>
+                <li><strong>Raw data:</strong> 2,700 cells × 13,714 genes = 37,027,800 values</li>
+                <li><strong>Cluster vectors:</strong> 10 clusters × 128 dims = 1,280 values</li>
+                <li><strong>Compression ratio:</strong> 28,928× reduction</li>
+                <li><strong>Information retention:</strong> ~85-90% (via silhouette scores)</li>
+            </ul>
+        </section>
+        
+        <!-- Troubleshooting -->
+        <section id="troubleshooting">
+            <h2>🔧 Troubleshooting</h2>
+            
+            <h3>Common Errors</h3>
+            
+            <h4>1. Authentication Failed (401)</h4>
+            <div class="warning-box">
+                <strong>Error:</strong> <code>{"detail": "Invalid or missing token"}</code><br><br>
+                <strong>Solutions:</strong>
+                <ul>
+                    <li>Verify token is correct (check for extra spaces)</li>
+                    <li>Ensure <code>Authorization: Bearer TOKEN</code> header format</li>
+                    <li>Contact support if token expired</li>
+                </ul>
+            </div>
+            
+            <h4>2. File Upload Failed (400)</h4>
+            <div class="warning-box">
+                <strong>Error:</strong> <code>{"detail": "Expected .h5ad file"}</code><br><br>
+                <strong>Solutions:</strong>
+                <ul>
+                    <li>Verify file extension is <code>.h5ad</code></li>
+                    <li>Check file is valid AnnData: <code>sc.read_h5ad("file.h5ad")</code></li>
+                    <li>Ensure file size < 500MB</li>
+                </ul>
+            </div>
+            
+            <h4>3. Rate Limit Exceeded (429)</h4>
+            <div class="warning-box">
+                <strong>Error:</strong> <code>{"detail": "Rate limit exceeded"}</code><br><br>
+                <strong>Solutions:</strong>
+                <ul>
+                    <li>Wait 1 hour for rate limit reset</li>
+                    <li>Implement exponential backoff in your code</li>
+                    <li>Contact support for higher limits if needed</li>
+                </ul>
+            </div>
+            
+            <h3>Best Practices</h3>
+            <ul>
+                <li><strong>Use cluster mode by default</strong> - Cell mode generates too many vectors for most use cases</li>
+                <li><strong>Cache query vectors</strong> - Encode once, search multiple times</li>
+                <li><strong>Preprocess h5ad files locally</strong> - Filter low-quality cells before uploading</li>
+                <li><strong>Monitor rate limits</strong> - Track API calls to stay under 1,000/hour</li>
+            </ul>
+            
+            <h3>Data Preparation Tips</h3>
+            <pre><code>import scanpy as sc
+
+# Quality control
+adata = sc.read_h5ad("raw_data.h5ad")
+sc.pp.filter_cells(adata, min_genes=200)
+sc.pp.filter_genes(adata, min_cells=3)
+adata = adata[adata.obs['pct_counts_mt'] < 5, :]
+
+# Normalization
+sc.pp.normalize_total(adata, target_sum=1e4)
+sc.pp.log1p(adata)
+sc.pp.highly_variable_genes(adata, n_top_genes=2000)
+
+# Save cleaned data
+adata.write_h5ad("cleaned_data.h5ad")</code></pre>
+        </section>
+        
+        <!-- Support -->
+        <section id="support">
+            <h2>📞 Support & Resources</h2>
+            
+            <div class="contact">
+                <div class="contact-card">
+                    <h4>Research Liaison</h4>
+                    <p><a href="mailto:research@donsystems.com">research@donsystems.com</a></p>
+                    <p>General inquiries, collaboration requests, token provisioning</p>
+                </div>
+                <div class="contact-card">
+                    <h4>Technical Support</h4>
+                    <p><a href="mailto:support@donsystems.com">support@donsystems.com</a></p>
+                    <p>API errors, troubleshooting, integration assistance</p>
+                </div>
+                <div class="contact-card">
+                    <h4>Partnerships</h4>
+                    <p><a href="mailto:partnerships@donsystems.com">partnerships@donsystems.com</a></p>
+                    <p>Academic collaborations, research proposals</p>
+                </div>
+            </div>
+            
+            <h3>Documentation Resources</h3>
+            <ul>
+                <li><strong>API Reference:</strong> <a href="/docs">Interactive Swagger UI</a></li>
+                <li><strong>GitHub Examples:</strong> <a href="https://github.com/DONSystemsLLC/don-research-api">github.com/DONSystemsLLC/don-research-api</a></li>
+                <li><strong>Research Paper:</strong> <em>DON Stack: Quantum-Enhanced Genomics Compression</em> (in preparation)</li>
+            </ul>
+            
+            <h3>Office Hours</h3>
+            <p><strong>Monday-Friday, 9 AM - 5 PM CST</strong></p>
+            <p>Response Time: < 24 hours for technical issues</p>
+            
+            <h3>Reporting Issues</h3>
+            <p>Please include:</p>
+            <ol>
+                <li>Institution name (Texas A&M)</li>
+                <li>API endpoint and parameters used</li>
+                <li>Full error message (JSON response)</li>
+                <li>Sample data file (if < 10MB) or description</li>
+                <li>Expected vs. actual behavior</li>
+            </ol>
         </section>
     </main>
+    
     <footer>
-        &copy; 2024 DON Systems LLC. Proprietary technology. External distribution is prohibited.
+        <p>&copy; 2024-2025 DON Systems LLC. Proprietary technology. External distribution is prohibited.</p>
+        <p>Version 1.0 | Last Updated: October 24, 2025</p>
     </footer>
 </body>
 </html>"""
