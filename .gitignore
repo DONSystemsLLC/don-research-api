@@ -165,3 +165,6 @@ pbmc3k_filtered_gene_bc_matrices.tar.gz
 filtered_gene_bc_matrices/
 pbmc*_filtered_gene_bc_matrices.tar.gz
 test_data/
+data/
+test_*.json
+nohup.out
