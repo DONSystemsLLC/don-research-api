@@ -225,9 +225,23 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
 
 ## License
 
-### Proprietary Software - DON Systems LLC
+### DON Health Commons License (DHCL) v0.1 - Intent Draft
 
-This software contains patent-protected algorithms and is provided under restricted license for authorized research institutions only. Distribution, modification, or commercial use is strictly prohibited without explicit written permission.
+This software is licensed under the **DON Health Commons License (DHCL)**, which enables mission-aligned clinical and academic research while protecting the instrument from enclosure by actors whose incentives conflict with public health.
+
+**Key Principles:**
+- ✅ **Open for Mission-Aligned Entities (MAEs)**: Academic institutions, public hospitals, non-profits, and qualifying startups
+- ✅ **Share Results, Protect Instruments**: Publish findings freely; keep algorithms auditable and in the Commons
+- ✅ **Data Sovereignty**: Federated use patterns; raw PHI stays on-site
+- ✅ **Reciprocity**: Contribute improvements back within 6 months
+- ❌ **Prohibited Entities**: Companies on the Designated Exclusion List (> $50M pharma/biotech revenue)
+
+**Full License**: See [LICENSE-DHCL-v0.1-intent.md](./LICENSE-DHCL-v0.1-intent.md)  
+**Attribution Notice**: See [NOTICE](./NOTICE)  
+
+**Status**: Intent draft for review and public comment. Not legal advice. Final terms subject to counsel review.
+
+**Compliance Self-Attestation**: Required for MAE access. Contact research@donsystems.com for template.
 
 ### Patents Pending
 
@@ -235,6 +249,10 @@ This software contains patent-protected algorithms and is provided under restric
 - Quantum Adjacency Code (QAC)
 - Temporal Adjacency Collapse Engine (TACE)
 
+**Patent Peace**: Licensees grant defensive patent licenses to other MAEs. Patent suits against the Licensed Work result in immediate license termination.
+
 ---
 
-*© 2024 DON Systems LLC. All rights reserved.*
+*© 2025 DON Systems LLC / Foundation. All rights reserved.*
+
+**Human-readable summary (non-binding)**: Use the DON instrument to make medicine reproducible and portable—if you're aligned with public health. Share improvements, keep logs, protect patient data, and don't hand the instrument to companies that will lock it up. Share results with anyone; the instrument stays in the Commons.

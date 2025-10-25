@@ -1,0 +1,12 @@
+{
+  "del_version": "0.1-intent",
+  "effective_date": "2025-01-24",
+  "last_updated": "2025-01-24",
+  "update_frequency": "quarterly",
+  "next_review_date": "2025-04-01",
+  "total_entities": 0,
+  "sha256_hash": "",
+  "status": "Intent draft - no entities during public comment period",
+  "notes": "DEL will be populated after DHCL v1.0 ratification and legal counsel review. During intent draft phase, MAE eligibility determined by self-attestation.",
+  "entities": []
+}

@@ -1,0 +1,21 @@
+DON HEALTH COMMONS LICENSE NOTICE
+
+This work uses the DON Research Node under the DON Health Commons License (DHCL) v0.1‑intent.
+
+© 2025 DON Systems LLC / Foundation
+https://don-systems.org/licenses/dhcl
+
+Coherence‑critical results were produced with Real QAC; seeds, engines, caps, and health snapshots
+are retained in audit logs per DHCL §3.
+
+ATTRIBUTION REQUIREMENT:
+When publishing research results derived from this software, please include:
+- Reference to DHCL v0.1-intent
+- Acknowledgment of DON Systems LLC
+- Note that results are reproducible via audit logs
+
+COMPLIANCE:
+This software is licensed to Mission-Aligned Entities (MAEs) only.
+See LICENSE-DHCL-v0.1-intent.md for complete terms and definitions.
+
+For commercial licensing inquiries: research@donsystems.com
