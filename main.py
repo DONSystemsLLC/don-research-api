@@ -205,8 +205,10 @@ def verify_token(credentials: HTTPAuthorizationCredentials = Security(security))
     return AUTHORIZED_INSTITUTIONS[token]
 
 # QAC router - import and include with authentication
+from don_research.api.genomics_router import router as genomics_router
 from src.qac.routes import router as qac_router
 app.include_router(qac_router, dependencies=[Depends(verify_token)])
+app.include_router(genomics_router, dependencies=[Depends(verify_token)])
 
 # Fallback implementations for when DON Stack isn't available
 def fallback_compress(data: List[float], target_dims: int = 8) -> List[float]:
