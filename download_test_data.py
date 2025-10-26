@@ -8,6 +8,8 @@ import numpy as np
 import os
 import json
 
+API_TOKEN = os.getenv("DON_API_TOKEN", "demo_token")
+
 def generate_realistic_gene_names(n_genes=2000):
     """Generate realistic gene names with known markers"""
     print("  Generating realistic gene names...")
@@ -287,7 +289,7 @@ echo "================================"
 
 # API endpoint
 API_BASE="http://localhost:8080/api/v1"
-AUTH_HEADER="Authorization: Bearer tamu_cai_lab"
+AUTH_HEADER="Authorization: Bearer {API_TOKEN}"
 
 echo ""
 echo "1. Testing Health Endpoint..."
@@ -357,7 +359,7 @@ if __name__ == "__main__":
         print("")
         print("3. Or test individual endpoints:")
         print("   curl -X POST http://localhost:8080/api/v1/genomics/compress \\")
-        print("     -H 'Authorization: Bearer tamu_cai_lab' \\") 
+        print(f"     -H 'Authorization: Bearer {API_TOKEN}' \\")
         print("     -H 'Content-Type: application/json' \\")
         print("     -d @test_data/requests/compression_small_fixed.json")
         

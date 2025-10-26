@@ -6,6 +6,7 @@ TDD approach: Write tests first, then implement
 import pytest
 from pathlib import Path
 from io import BytesIO
+import time
 import json
 from .test_helpers import create_repeated_labels
 
@@ -78,10 +79,26 @@ def test_export_artifacts_async(api_client, small_adata, tmpdir):
     
     # Check job status
     job_id = data["job_id"]
-    job_response = api_client.get(f"/api/v1/bio/jobs/{job_id}")
-    assert job_response.status_code == 200
-    job_data = job_response.json()
+    # Poll for completion (background task should process quickly in tests)
+    for _ in range(20):
+        job_response = api_client.get(f"/api/v1/bio/jobs/{job_id}")
+        assert job_response.status_code == 200
+        job_data = job_response.json()
+        if job_data["status"] == "completed":
+            break
+        time.sleep(0.1)
+    else:
+        pytest.fail("async export job did not complete in time")
+
     assert job_data["endpoint"] == "export-artifacts"
+    assert job_data["status"] == "completed"
+    assert job_data["result"] is not None
+    result = job_data["result"]
+    assert result["nodes"] >= 1
+    assert result["vectors"] == small_adata.n_obs
+    assert len(result["artifacts"]) == 2
+    for artifact_path in result["artifacts"]:
+        assert Path(artifact_path).exists()
 
 
 def test_signal_sync_sync(api_client, tmpdir):

@@ -1,0 +1,12 @@
+{
+  "demo_token": {
+    "name": "Demo Access",
+    "contact": "demo@donsystems.com",
+    "rate_limit": 100
+  },
+  "replace_with_secure_token": {
+    "name": "Mission Aligned Partner",
+    "contact": "partner@example.org",
+    "rate_limit": 1000
+  }
+}

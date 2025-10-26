@@ -11,6 +11,7 @@ biological fidelity and cellular heterogeneity patterns.
 """
 
 import json
+import os
 import requests
 import time
 import numpy as np
@@ -84,8 +85,9 @@ def execute_don_analysis(data):
     start_time = time.time()
     
     # Configure authentication for Professor Cai's lab
+    token = os.getenv("TAMU_API_TOKEN", "demo_token")
     headers = {
-        "Authorization": "Bearer tamu_cai_lab",
+        "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
     

@@ -8,6 +8,9 @@ CONFIDENTIAL - DON Systems LLC
 Patent-protected technology - Do not distribute
 """
 
+from datetime import datetime, timezone
+from uuid import uuid4
+
 from fastapi import FastAPI, HTTPException, Depends, Security, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import JSONResponse, HTMLResponse
@@ -41,6 +44,32 @@ except ImportError as e:
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("DONStackAPI")
+
+from src.don_memory.dependencies import get_trace_storage
+from src.don_memory.trace_storage import TraceStorage
+from src.don_memory.system import get_system_health, set_system_health
+from src.auth.authorized_institutions import load_authorized_institutions
+
+
+def _refresh_system_health() -> None:
+    snapshot = {
+        "don_stack": {
+            "mode": "real" if REAL_DON_STACK else "fallback",
+            "don_gpu": bool(REAL_DON_STACK),
+            "tace": bool(REAL_DON_STACK),
+            "qac": bool(REAL_DON_STACK),
+            "adapter_loaded": don_adapter is not None,
+        }
+    }
+    set_system_health(snapshot)
+
+
+def health_snapshot() -> Dict[str, Any]:
+    return get_system_health()
+
+
+def now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
 
 HELP_PAGE_HTML = """<!DOCTYPE html>
 <html lang="en">
@@ -616,18 +645,7 @@ app = FastAPI(
 security = HTTPBearer()
 
 # Research institution authentication
-AUTHORIZED_INSTITUTIONS = {
-    "tamu_cai_lab": {
-        "name": "Texas A&M Cai Lab", 
-        "contact": "jcai@tamu.edu",
-        "rate_limit": 1000
-    },
-    "demo_token": {
-        "name": "Demo Access",
-        "contact": "demo@donsystems.com", 
-        "rate_limit": 100
-    }
-}
+AUTHORIZED_INSTITUTIONS = load_authorized_institutions()
 
 # Usage tracking
 usage_tracker = {}
@@ -639,6 +657,8 @@ if REAL_DON_STACK:
 else:
     don_adapter = None
     logger.warning("⚠️ DON Stack Research API running with fallback implementations")
+
+_refresh_system_health()
 
 class GenomicsData(BaseModel):
     gene_names: List[str] = Field(..., description="Gene identifiers")
@@ -804,27 +824,32 @@ async def help_page():
 async def health_check():
     """Public health check endpoint"""
     from src.qac.tasks import HAVE_REAL_QAC, DEFAULT_ENGINE
-    
+
+    snapshot = health_snapshot()
+    snapshot.setdefault("don_stack", {})
+    snapshot["don_stack"].update(
+        {
+            "mode": "production" if REAL_DON_STACK else "fallback",
+            "adapter_loaded": don_adapter is not None,
+        }
+    )
+
     return {
         "status": "healthy",
-        "don_stack": {
-            "mode": "production" if REAL_DON_STACK else "fallback",
-            "don_gpu": REAL_DON_STACK,
-            "tace": REAL_DON_STACK,
-            "qac": REAL_DON_STACK,
-            "adapter_loaded": don_adapter is not None
-        },
+        "don_stack": snapshot["don_stack"],
         "qac": {
             "supported_engines": ["real_qac", "laplace"] if HAVE_REAL_QAC else ["laplace"],
-            "default_engine": DEFAULT_ENGINE if HAVE_REAL_QAC else "laplace"
+            "default_engine": DEFAULT_ENGINE if HAVE_REAL_QAC else "laplace",
+            "real_engine_available": HAVE_REAL_QAC,
         },
-        "timestamp": time.time()
+        "timestamp": time.time(),
     }
 
 @app.post("/api/v1/genomics/compress")
 async def compress_genomics_data(
     request: Request,
-    institution: dict = Depends(verify_token)
+    trace_storage: TraceStorage = Depends(get_trace_storage),
+    institution: dict = Depends(verify_token),
 ):
     """
     Compress single-cell gene expression data using DON-GPU fractal clustering.
@@ -835,13 +860,18 @@ async def compress_genomics_data(
         
         # Parse request body
         body = await request.json()
-        
+
+        project_id = body.get("project_id")
+        user_id = body.get("user_id")
+        parent_trace_id = body.get("parent_trace_id")
+        started_at = datetime.now(timezone.utc)
+
         data = body.get("data", {})
         X = np.array(data.get("expression_matrix", []), dtype=float)
         gene_names = data.get("gene_names", [])
         cells, genes = X.shape if X.ndim == 2 else (0, 0)
 
-        req_k = int(body.get("compression_target", 32))
+        req_k = int(body.get("compression_target") or body.get("target_dims") or 32)
         params = body.get("params") or {}
         mode = params.get("mode", "auto_evr")          # "auto_evr" | "fixed_k"
         evr_target = float(params.get("evr_target", 0.95))
@@ -886,6 +916,9 @@ async def compress_genomics_data(
                 Z = np.concatenate([Z, U[:, :add] * s[:add]], axis=1)
 
         runtime_ms = int((perf_counter() - t0) * 1000)
+        finished_at = datetime.now(timezone.utc)
+        engine_used = "real_don_gpu" if REAL_DON_STACK else "fallback_compress"
+        fallback_reason = None if REAL_DON_STACK else "real DON stack unavailable"
 
         achieved_k = int(Z.shape[1])
         resp = {
@@ -909,8 +942,35 @@ async def compress_genomics_data(
             "institution": institution["name"],
             "runtime_ms": runtime_ms,
             "seed": seed,
-            "stabilize": stabilize
+            "stabilize": stabilize,
+            "engine_used": engine_used,
+            "fallback_reason": fallback_reason,
         }
+
+        trace_id = uuid4().hex
+
+        try:
+            trace_payload = {
+                "id": trace_id,
+                "project_id": project_id,
+                "user_id": user_id,
+                "event_type": "compress",
+                "status": "succeeded",
+                "metrics": resp["compression_stats"],
+                "artifacts": {},
+                "engine_used": engine_used,
+                "seed": seed,
+                "health": health_snapshot(),
+                "started_at": started_at,
+                "finished_at": finished_at,
+            }
+            trace_id = trace_storage.store_trace(trace_payload)
+            if parent_trace_id:
+                trace_storage.link(parent_trace_id, trace_id, "follows")
+        except Exception as logging_error:  # pragma: no cover - trace persistence guard
+            logger.error("Failed to persist compression trace", exc_info=logging_error)
+
+        resp["trace_id"] = trace_id
         return JSONResponse(resp)
         
     except Exception as e:
@@ -948,7 +1008,7 @@ async def optimize_rag_system(
         if REAL_DON_STACK:
             # Use REAL TACE tuning
             similarity_tensions = [request.similarity_threshold] * 5
-            threshold_result = don_adapter.tune(similarity_tensions, request.similarity_threshold)
+            threshold_result = don_adapter.tune_alpha(similarity_tensions, request.similarity_threshold)
             # Convert to float
             optimized_threshold = float(threshold_result) if threshold_result is not None else request.similarity_threshold
         else:

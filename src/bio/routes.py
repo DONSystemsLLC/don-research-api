@@ -5,14 +5,14 @@ Following genomics router pattern: UploadFile, Form, sync flag, job system
 """
 
 import json
+import logging
 import tempfile
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
-from datetime import datetime
+from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 
 from src.bio.schemas import (
     BioExportRequest,
@@ -29,7 +29,13 @@ from src.bio.adapter_anndata import export_artifacts
 from src.bio.parasite_detector import detect_parasites
 from src.bio.evolution import compare_runs
 
+from src.don_memory.dependencies import get_trace_storage
+from src.don_memory.trace_storage import TraceStorage
+from src.don_memory.system import get_system_health
+
 import anndata as ad
+
+logger = logging.getLogger(__name__)
 
 
 # Router setup
@@ -37,6 +43,7 @@ router = APIRouter(prefix="/api/v1/bio", tags=["bio"])
 
 # In-memory job store (replace with Redis/SQLite in production)
 _bio_jobs: dict[str, BioJob] = {}
+_ASYNC_ARTIFACT_ROOT = Path("artifacts") / "bio_jobs"
 
 
 # ------------------------------------------------------------------------------
@@ -50,7 +57,7 @@ def _create_job(endpoint: str, project_id: Optional[str], user_id: Optional[str]
         job_id=job_id,
         endpoint=endpoint,
         status="pending",
-        created_at=datetime.utcnow().isoformat(),
+        created_at=_utc_now().isoformat(),
         project_id=project_id,
         user_id=user_id
     )
@@ -70,21 +77,144 @@ def _update_job(job_id: str, status: str, result: Optional[dict] = None, error: 
     if error:
         job.error = error
     if status in ["completed", "failed"]:
-        job.completed_at = datetime.utcnow().isoformat()
+        job.completed_at = _utc_now().isoformat()
 
 
-def _log_memory_event(endpoint: str, project_id: Optional[str], user_id: Optional[str], data: dict):
-    """Log event to memory system (JSONL/MD/SQLite)"""
-    # TODO: Integrate with existing memory logging in don_memory/
-    # For now, just print for visibility
-    event = {
-        "timestamp": datetime.utcnow().isoformat(),
-        "endpoint": endpoint,
+def _utc_now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _health_snapshot() -> dict:
+    return get_system_health()
+
+
+def _log_memory_event(
+    trace_storage: TraceStorage,
+    event_type: str,
+    project_id: Optional[str],
+    user_id: Optional[str],
+    metrics: Dict[str, Any],
+    *,
+    status: str = "completed",
+    seed: Optional[int] = None,
+    started_at: Optional[datetime] = None,
+    finished_at: Optional[datetime] = None,
+    artifacts: Optional[Any] = None,
+    parent_trace_id: Optional[str] = None,
+) -> Optional[str]:
+    """Persist bio event traces using TraceStorage."""
+
+    if not trace_storage:
+        return None
+
+    trace_id = uuid.uuid4().hex
+    started = started_at or _utc_now()
+    finished = finished_at or started
+    payload = {
+        "id": trace_id,
         "project_id": project_id,
         "user_id": user_id,
-        "data": data
+        "event_type": event_type,
+        "status": status,
+        "metrics": metrics,
+        "artifacts": artifacts or {},
+        "engine_used": "bio_pipeline",
+        "health": _health_snapshot(),
+        "seed": seed,
+        "started_at": started,
+        "finished_at": finished,
     }
-    print(f"[MEMORY LOG] {json.dumps(event)}")
+
+    try:
+        trace_storage.store_trace(payload)
+        if parent_trace_id:
+            trace_storage.link(parent_trace_id, trace_id, "follows")
+        return trace_id
+    except Exception as exc:  # pragma: no cover - resilience guard
+        logger.error("Failed to log bio memory event", exc_info=exc)
+        return None
+
+
+def _run_export_artifacts_job(
+    job_id: str,
+    h5ad_path: str,
+    cluster_key: str,
+    latent_key: str,
+    paga_key: Optional[str],
+    sample_cells: Optional[int],
+    seed: int,
+    project_id: Optional[str],
+    user_id: Optional[str],
+    output_dir: str,
+    trace_storage: TraceStorage,
+) -> None:
+    """Process an export-artifacts job in the background."""
+
+    _update_job(job_id, "running")
+    started_at = _utc_now()
+
+    try:
+        result = export_artifacts(
+            h5ad_path=h5ad_path,
+            cluster_key=cluster_key,
+            latent_key=latent_key,
+            paga_key=paga_key,
+            sample_cells=sample_cells,
+            output_dir=output_dir,
+            seed=seed,
+        )
+        finished_at = _utc_now()
+
+        metrics = {
+            "nodes": result["nodes"],
+            "edges": result["edges"],
+            "vectors": result["vectors"],
+            "metadata": result.get("metadata", {}),
+            "status": "completed",
+        }
+
+        trace_id = _log_memory_event(
+            trace_storage,
+            "export-artifacts",
+            project_id,
+            user_id,
+            metrics,
+            seed=seed,
+            started_at=started_at,
+            finished_at=finished_at,
+            artifacts=result["artifacts"],
+        )
+
+        job_result: Dict[str, Any] = {
+            "nodes": result["nodes"],
+            "edges": result["edges"],
+            "vectors": result["vectors"],
+            "artifacts": result["artifacts"],
+            "metadata": result.get("metadata", {}),
+        }
+        if trace_id:
+            job_result["trace_id"] = trace_id
+
+        _update_job(job_id, "completed", result=job_result)
+
+    except Exception as exc:  # pragma: no cover - exercised via integration tests
+        logger.exception("Async export job failed", exc_info=exc)
+        failure_metrics = {
+            "status": "failed",
+            "error": str(exc),
+        }
+        _log_memory_event(
+            trace_storage,
+            "export-artifacts",
+            project_id,
+            user_id,
+            failure_metrics,
+            seed=seed,
+            started_at=started_at,
+            finished_at=_utc_now(),
+            artifacts=None,
+        )
+        _update_job(job_id, "failed", error=str(exc))
 
 
 # ------------------------------------------------------------------------------
@@ -93,6 +223,7 @@ def _log_memory_event(endpoint: str, project_id: Optional[str], user_id: Optiona
 
 @router.post("/export-artifacts", response_model=BioExportResponse)
 async def export_artifacts_endpoint(
+    background_tasks: BackgroundTasks,
     file: UploadFile = File(..., description="H5AD file to export"),
     cluster_key: str = Form(...),
     latent_key: str = Form(...),
@@ -101,7 +232,8 @@ async def export_artifacts_endpoint(
     sync: bool = Form(False),
     seed: int = Form(42),
     project_id: Optional[str] = Form(None),
-    user_id: Optional[str] = Form(None)
+    user_id: Optional[str] = Form(None),
+    trace_storage: TraceStorage = Depends(get_trace_storage),
 ):
     """
     Export H5AD to collapse_map.json + collapse_vectors.jsonl
@@ -114,21 +246,20 @@ async def export_artifacts_endpoint(
     if not file.filename.endswith('.h5ad'):
         raise HTTPException(status_code=400, detail="File must be .h5ad format")
     
-    # Create temp directory for processing
-    with tempfile.TemporaryDirectory() as tmpdir:
-        # Save uploaded file
-        h5ad_path = Path(tmpdir) / file.filename
-        with open(h5ad_path, 'wb') as f:
-            content = await file.read()
-            f.write(content)
-        
-        # Artifacts output directory
-        artifacts_dir = Path(tmpdir) / "artifacts"
-        artifacts_dir.mkdir(exist_ok=True)
-        
-        if sync:
-            # Synchronous execution
+    content = await file.read()
+
+    if sync:
+        # Create temp directory for processing
+        with tempfile.TemporaryDirectory() as tmpdir:
+            h5ad_path = Path(tmpdir) / file.filename
+            with open(h5ad_path, 'wb') as f:
+                f.write(content)
+
+            artifacts_dir = Path(tmpdir) / "artifacts"
+            artifacts_dir.mkdir(exist_ok=True)
+
             try:
+                started_at = _utc_now()
                 result = export_artifacts(
                     h5ad_path=str(h5ad_path),
                     cluster_key=cluster_key,
@@ -138,7 +269,8 @@ async def export_artifacts_endpoint(
                     output_dir=str(artifacts_dir),
                     seed=seed
                 )
-                
+                finished_at = _utc_now()
+
                 response = BioExportResponse(
                     job_id=None,
                     nodes=result["nodes"],
@@ -148,35 +280,71 @@ async def export_artifacts_endpoint(
                     status="completed",
                     message="Export completed successfully"
                 )
-                
-                # Log to memory
-                _log_memory_event("export-artifacts", project_id, user_id, {
+
+                metrics = {
                     "nodes": result["nodes"],
+                    "edges": result["edges"],
                     "vectors": result["vectors"],
-                    "status": "completed"
-                })
-                
+                    "metadata": result.get("metadata", {}),
+                    "status": "completed",
+                }
+                trace_id = _log_memory_event(
+                    trace_storage,
+                    "export-artifacts",
+                    project_id,
+                    user_id,
+                    metrics,
+                    seed=seed,
+                    started_at=started_at,
+                    finished_at=finished_at,
+                    artifacts=result["artifacts"],
+                )
+
+                if trace_id:
+                    response.message = f"Export completed successfully (trace: {trace_id})"
+
                 return response
-                
+
             except Exception as e:
                 raise HTTPException(status_code=500, detail=f"Export failed: {str(e)}")
-        
-        else:
-            # Asynchronous execution - create job
-            job_id = _create_job("export-artifacts", project_id, user_id)
-            
-            # TODO: Queue job with Celery/background task
-            # For now, just return pending status
-            
-            return BioExportResponse(
-                job_id=job_id,
-                nodes=0,
-                edges=0,
-                vectors=0,
-                artifacts=[],
-                status="pending",
-                message="Job queued for processing"
-            )
+
+    # Asynchronous execution - create job
+    job_id = _create_job("export-artifacts", project_id, user_id)
+    _ASYNC_ARTIFACT_ROOT.mkdir(parents=True, exist_ok=True)
+    job_dir = _ASYNC_ARTIFACT_ROOT / job_id
+    job_dir.mkdir(parents=True, exist_ok=True)
+
+    h5ad_path = job_dir / file.filename
+    with open(h5ad_path, 'wb') as f:
+        f.write(content)
+
+    artifacts_dir = job_dir / "artifacts"
+    artifacts_dir.mkdir(exist_ok=True)
+
+    background_tasks.add_task(
+        _run_export_artifacts_job,
+        job_id,
+        str(h5ad_path),
+        cluster_key,
+        latent_key,
+        paga_key,
+        sample_cells,
+        seed,
+        project_id,
+        user_id,
+        str(artifacts_dir),
+        trace_storage,
+    )
+
+    return BioExportResponse(
+        job_id=job_id,
+        nodes=0,
+        edges=0,
+        vectors=0,
+        artifacts=[],
+        status="pending",
+        message="Job queued for processing"
+    )
 
 
 # ------------------------------------------------------------------------------
@@ -191,7 +359,8 @@ async def signal_sync_endpoint(
     sync: bool = Form(False),
     seed: int = Form(42),
     project_id: Optional[str] = Form(None),
-    user_id: Optional[str] = Form(None)
+    user_id: Optional[str] = Form(None),
+    trace_storage: TraceStorage = Depends(get_trace_storage),
 ):
     """
     Compute cross-artifact coherence and synchronization
@@ -211,6 +380,7 @@ async def signal_sync_endpoint(
     if sync:
         # Synchronous execution
         try:
+            started_at = _utc_now()
             # Compute coherence metrics
             nodes1 = set(node["id"] for node in map1["nodes"])
             nodes2 = set(node["id"] for node in map2["nodes"])
@@ -249,11 +419,29 @@ async def signal_sync_endpoint(
             )
             
             # Log to memory
-            _log_memory_event("signal-sync", project_id, user_id, {
+            finished_at = _utc_now()
+            metrics = {
                 "coherence_score": coherence_score,
+                "node_overlap": node_overlap,
+                "edge_consistency": edge_consistency,
+                "coherence_threshold": coherence_threshold,
                 "synchronized": synchronized,
-                "status": "completed"
-            })
+                "status": "completed",
+            }
+            trace_id = _log_memory_event(
+                trace_storage,
+                "signal-sync",
+                project_id,
+                user_id,
+                metrics,
+                seed=seed,
+                started_at=started_at,
+                finished_at=finished_at,
+                artifacts={"report": report},
+            )
+
+            if trace_id:
+                response.message = f"Signal sync completed (trace: {trace_id})"
             
             return response
             
@@ -290,7 +478,8 @@ async def parasite_detect_endpoint(
     sync: bool = Form(False),
     seed: int = Form(42),
     project_id: Optional[str] = Form(None),
-    user_id: Optional[str] = Form(None)
+    user_id: Optional[str] = Form(None),
+    trace_storage: TraceStorage = Depends(get_trace_storage),
 ):
     """
     Detect ambient RNA, doublets, batch contamination
@@ -309,6 +498,7 @@ async def parasite_detect_endpoint(
         
         if sync:
             try:
+                started_at = _utc_now()
                 # Load AnnData
                 adata = ad.read_h5ad(h5ad_path)
                 
@@ -322,6 +512,7 @@ async def parasite_detect_endpoint(
                     batch_threshold=batch_threshold,
                     seed=seed
                 )
+                finished_at = _utc_now()
                 
                 response = BioParasiteDetectResponse(
                     job_id=None,
@@ -336,12 +527,27 @@ async def parasite_detect_endpoint(
                 )
                 
                 # Log to memory
-                _log_memory_event("parasite-detect", project_id, user_id, {
+                metrics = {
                     "n_cells": result["n_cells"],
                     "n_flagged": result["n_flagged"],
                     "parasite_score": result["parasite_score"],
-                    "status": "completed"
-                })
+                    "thresholds": result["thresholds"],
+                    "status": "completed",
+                }
+                trace_id = _log_memory_event(
+                    trace_storage,
+                    "parasite-detect",
+                    project_id,
+                    user_id,
+                    metrics,
+                    seed=seed,
+                    started_at=started_at,
+                    finished_at=finished_at,
+                    artifacts={"report": result["report"]},
+                )
+
+                if trace_id:
+                    response.message = f"QC analysis completed (trace: {trace_id})"
                 
                 return response
                 
@@ -377,7 +583,8 @@ async def evolution_report_endpoint(
     sync: bool = Form(False),
     seed: int = Form(42),
     project_id: Optional[str] = Form(None),
-    user_id: Optional[str] = Form(None)
+    user_id: Optional[str] = Form(None),
+    trace_storage: TraceStorage = Depends(get_trace_storage),
 ):
     """
     Compare two pipeline runs for stability and drift
@@ -399,6 +606,7 @@ async def evolution_report_endpoint(
         
         if sync:
             try:
+                started_at = _utc_now()
                 # Compare runs
                 result = compare_runs(
                     run1_path=str(run1_path),
@@ -407,6 +615,7 @@ async def evolution_report_endpoint(
                     latent_key=latent_key,
                     seed=seed
                 )
+                finished_at = _utc_now()
                 
                 response = BioEvolutionResponse(
                     job_id=None,
@@ -422,12 +631,29 @@ async def evolution_report_endpoint(
                 )
                 
                 # Log to memory
-                _log_memory_event("evolution-report", project_id, user_id, {
+                metrics = {
                     "run1": run1_file.filename,
                     "run2": run2_name,
+                    "n_cells_run1": result["n_cells_run1"],
+                    "n_cells_run2": result["n_cells_run2"],
                     "stability_score": result["stability_score"],
-                    "status": "completed"
-                })
+                    "delta_metrics": result["delta_metrics"],
+                    "status": "completed",
+                }
+                trace_id = _log_memory_event(
+                    trace_storage,
+                    "evolution-report",
+                    project_id,
+                    user_id,
+                    metrics,
+                    seed=seed,
+                    started_at=started_at,
+                    finished_at=finished_at,
+                    artifacts={"report": result.get("report", {})},
+                )
+
+                if trace_id:
+                    response.message = f"Evolution analysis completed (trace: {trace_id})"
                 
                 return response
                 
@@ -461,3 +687,27 @@ async def get_job_status(job_id: str):
         raise HTTPException(status_code=404, detail="Job not found")
     
     return _bio_jobs[job_id]
+
+
+# ------------------------------------------------------------------------------
+# Memory Endpoint - Retrieve project traces
+# ------------------------------------------------------------------------------
+
+@router.get("/memory/{project_id}")
+async def get_project_memory(
+    project_id: str,
+    limit: int = 100,
+    trace_storage: TraceStorage = Depends(get_trace_storage),
+):
+    """
+    Retrieve memory traces for a specific project.
+    
+    Returns traces ordered newest-first (by finished_at, then created_at).
+    """
+    traces = trace_storage.list_traces(project_id=project_id, limit=limit)
+    
+    return {
+        "project_id": project_id,
+        "count": len(traces),
+        "traces": traces
+    }
