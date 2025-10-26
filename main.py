@@ -175,6 +175,7 @@ HELP_PAGE_HTML = """<!DOCTYPE html>
         <a href="#quick-start">Quick Start</a>
         <a href="#authentication">Authentication</a>
         <a href="#endpoints">API Endpoints</a>
+        <a href="#bio-endpoints">Bio Module</a>
         <a href="#workflows">Workflows</a>
         <a href="#troubleshooting">Troubleshooting</a>
         <a href="#support">Support</a>
@@ -490,6 +491,296 @@ for i, hit in enumerate(results, 1):
                 <tr><td>Monocytes</td><td>CD14, FCGR3A, CST3, LYZ</td></tr>
                 <tr><td>Dendritic cells</td><td>FCER1A, CST3, CLEC10A</td></tr>
             </table>
+        </section>
+        
+        <!-- Bio Module - ResoTrace Integration -->
+        <section id="bio-endpoints">
+            <h2>🧬 Bio Module - ResoTrace Integration</h2>
+            
+            <p>The Bio module provides advanced single-cell analysis workflows including artifact export, signal synchronization, QC parasite detection, and evolution tracking. All endpoints support both <strong>synchronous</strong> (immediate) and <strong>asynchronous</strong> (background job) execution modes.</p>
+            
+            <div class="info-box">
+                <strong>Key Features:</strong><br>
+                • <strong>Sync/Async Modes:</strong> Choose immediate results or background processing<br>
+                • <strong>Memory Logging:</strong> All operations tracked with trace_id for audit trails<br>
+                • <strong>Job Polling:</strong> Monitor long-running async jobs via <code>/bio/jobs/{job_id}</code><br>
+                • <strong>Project Tracking:</strong> Retrieve all traces for a project via <code>/bio/memory/{project_id}</code>
+            </div>
+            
+            <h3>1. Export Artifacts</h3>
+            <p><span class="badge warning">POST</span> <code>/api/v1/bio/export-artifacts</code></p>
+            <p>Convert H5AD files into ResoTrace-compatible collapse maps and vector collections. Exports cluster graphs, PAGA connectivity, and per-cell embeddings.</p>
+            
+            <h4>Parameters:</h4>
+            <ul>
+                <li><code>file</code> (required): <code>.h5ad</code> file upload (AnnData format)</li>
+                <li><code>cluster_key</code> (required): Column in <code>adata.obs</code> with cluster labels (e.g., "leiden")</li>
+                <li><code>latent_key</code> (required): Embedding key in <code>adata.obsm</code> (e.g., "X_umap", "X_pca")</li>
+                <li><code>paga_key</code> (optional): PAGA connectivity key (default: None)</li>
+                <li><code>sample_cells</code> (optional): Max cells to export (default: all cells)</li>
+                <li><code>sync</code> (optional): <code>true</code> for immediate, <code>false</code> for async (default: false)</li>
+                <li><code>seed</code> (optional): Random seed for reproducibility (default: 42)</li>
+                <li><code>project_id</code> (optional): Your project identifier for tracking</li>
+                <li><code>user_id</code> (optional): User identifier for audit logging</li>
+            </ul>
+            
+            <h4>Example (Synchronous):</h4>
+            <pre><code>import requests
+
+with open("pbmc_processed.h5ad", "rb") as f:
+    files = {"file": ("pbmc.h5ad", f, "application/octet-stream")}
+    data = {
+        "cluster_key": "leiden",
+        "latent_key": "X_umap",
+        "sync": "true",
+        "project_id": "cai_lab_pbmc_study",
+        "user_id": "researcher_001"
+    }
+    
+    response = requests.post(
+        f"{API_URL}/api/v1/bio/export-artifacts",
+        headers={"Authorization": f"Bearer {TOKEN}"},
+        files=files,
+        data=data
+    )
+
+result = response.json()
+print(f"✓ Exported {result['nodes']} clusters")
+print(f"✓ {result['vectors']} cell vectors")
+print(f"✓ Artifacts: {result['artifacts']}")
+print(f"✓ Trace ID: {result.get('trace_id')}")</code></pre>
+            
+            <h4>Example (Asynchronous):</h4>
+            <pre><code># Submit job
+with open("large_dataset.h5ad", "rb") as f:
+    files = {"file": ("data.h5ad", f, "application/octet-stream")}
+    data = {"cluster_key": "leiden", "latent_key": "X_pca", "sync": "false"}
+    
+    response = requests.post(
+        f"{API_URL}/api/v1/bio/export-artifacts",
+        headers={"Authorization": f"Bearer {TOKEN}"},
+        files=files,
+        data=data
+    )
+
+job_id = response.json()["job_id"]
+print(f"Job ID: {job_id}")
+
+# Poll job status
+import time
+while True:
+    status_response = requests.get(
+        f"{API_URL}/api/v1/bio/jobs/{job_id}",
+        headers={"Authorization": f"Bearer {TOKEN}"}
+    )
+    
+    job = status_response.json()
+    status = job["status"]
+    print(f"Status: {status}")
+    
+    if status == "completed":
+        result = job["result"]
+        print(f"✓ Complete! Nodes: {result['nodes']}, Vectors: {result['vectors']}")
+        break
+    elif status == "failed":
+        print(f"✗ Failed: {job.get('error')}")
+        break
+    
+    time.sleep(2)  # Poll every 2 seconds</code></pre>
+            
+            <h4>Response (Sync):</h4>
+            <pre><code>{
+  "job_id": null,
+  "nodes": 8,
+  "edges": 0,
+  "vectors": 2700,
+  "artifacts": [
+    "collapse_map.json",
+    "collapse_vectors.jsonl"
+  ],
+  "status": "completed",
+  "message": "Export completed successfully (trace: abc123...)"
+}</code></pre>
+            
+            <h3>2. Signal Sync</h3>
+            <p><span class="badge warning">POST</span> <code>/api/v1/bio/signal-sync</code></p>
+            <p>Compute cross-artifact coherence and synchronization metrics between two collapse maps. Useful for comparing replicates or validating pipeline stability.</p>
+            
+            <h4>Parameters:</h4>
+            <ul>
+                <li><code>artifact1</code> (required): First collapse_map.json file</li>
+                <li><code>artifact2</code> (required): Second collapse_map.json file</li>
+                <li><code>coherence_threshold</code> (optional): Minimum coherence for sync (default: 0.8)</li>
+                <li><code>sync</code> (optional): Execution mode (default: false)</li>
+                <li><code>seed</code>, <code>project_id</code>, <code>user_id</code>: As above</li>
+            </ul>
+            
+            <h4>Example:</h4>
+            <pre><code>with open("run1_collapse_map.json", "rb") as f1, \
+     open("run2_collapse_map.json", "rb") as f2:
+    
+    files = {
+        "artifact1": ("run1.json", f1, "application/json"),
+        "artifact2": ("run2.json", f2, "application/json")
+    }
+    data = {"coherence_threshold": "0.7", "sync": "true"}
+    
+    response = requests.post(
+        f"{API_URL}/api/v1/bio/signal-sync",
+        headers={"Authorization": f"Bearer {TOKEN}"},
+        files=files,
+        data=data
+    )
+
+result = response.json()
+print(f"Coherence Score: {result['coherence_score']:.3f}")
+print(f"Node Overlap: {result['node_overlap']:.3f}")
+print(f"Synchronized: {result['synchronized']}")</code></pre>
+            
+            <h4>Interpretation:</h4>
+            <table>
+                <tr><th>Coherence Score</th><th>Interpretation</th></tr>
+                <tr><td>0.9 - 1.0</td><td>Excellent consistency (technical replicates)</td></tr>
+                <tr><td>0.7 - 0.9</td><td>Good consistency (biological replicates)</td></tr>
+                <tr><td>0.5 - 0.7</td><td>Moderate similarity (related conditions)</td></tr>
+                <tr><td>&lt; 0.5</td><td>Low similarity (different conditions/batches)</td></tr>
+            </table>
+            
+            <h3>3. Parasite Detector (QC)</h3>
+            <p><span class="badge warning">POST</span> <code>/api/v1/bio/qc/parasite-detect</code></p>
+            <p>Detect quality control "parasites" including ambient RNA, doublets, and batch effects. Returns per-cell flags and overall contamination score.</p>
+            
+            <h4>Parameters:</h4>
+            <ul>
+                <li><code>file</code> (required): <code>.h5ad</code> file upload</li>
+                <li><code>cluster_key</code> (required): Cluster column in <code>adata.obs</code></li>
+                <li><code>batch_key</code> (required): Batch/sample column in <code>adata.obs</code></li>
+                <li><code>ambient_threshold</code> (optional): Ambient RNA cutoff (default: 0.15)</li>
+                <li><code>doublet_threshold</code> (optional): Doublet score cutoff (default: 0.25)</li>
+                <li><code>batch_threshold</code> (optional): Batch effect cutoff (default: 0.3)</li>
+                <li><code>sync</code>, <code>seed</code>, <code>project_id</code>, <code>user_id</code>: As above</li>
+            </ul>
+            
+            <h4>Example:</h4>
+            <pre><code>with open("pbmc_raw.h5ad", "rb") as f:
+    files = {"file": ("pbmc.h5ad", f, "application/octet-stream")}
+    data = {
+        "cluster_key": "leiden",
+        "batch_key": "sample",
+        "ambient_threshold": "0.15",
+        "doublet_threshold": "0.25",
+        "sync": "true"
+    }
+    
+    response = requests.post(
+        f"{API_URL}/api/v1/bio/qc/parasite-detect",
+        headers={"Authorization": f"Bearer {TOKEN}"},
+        files=files,
+        data=data
+    )
+
+result = response.json()
+print(f"Cells: {result['n_cells']}")
+print(f"Flagged: {result['n_flagged']} ({result['n_flagged']/result['n_cells']*100:.1f}%)")
+print(f"Parasite Score: {result['parasite_score']:.1f}%")
+
+# Flags: list of booleans, one per cell
+print(f"\\nFlagged cell indices: {[i for i, f in enumerate(result['flags']) if f][:10]}...")</code></pre>
+            
+            <h4>Recommended Actions:</h4>
+            <table>
+                <tr><th>Parasite Score</th><th>Action</th></tr>
+                <tr><td>0-5%</td><td>Excellent quality - proceed</td></tr>
+                <tr><td>5-15%</td><td>Good quality - minor filtering recommended</td></tr>
+                <tr><td>15-30%</td><td>Moderate contamination - filter flagged cells</td></tr>
+                <tr><td>&gt; 30%</td><td>High contamination - review QC pipeline</td></tr>
+            </table>
+            
+            <h3>4. Evolution Report</h3>
+            <p><span class="badge warning">POST</span> <code>/api/v1/bio/evolution/report</code></p>
+            <p>Compare two pipeline runs to assess stability, drift, and reproducibility. Useful for parameter optimization and batch effect validation.</p>
+            
+            <h4>Parameters:</h4>
+            <ul>
+                <li><code>run1_file</code> (required): First run H5AD file</li>
+                <li><code>run2_file</code> (required): Second run H5AD file</li>
+                <li><code>run2_name</code> (required): Name/label for second run</li>
+                <li><code>cluster_key</code> (required): Cluster column</li>
+                <li><code>latent_key</code> (required): Embedding key</li>
+                <li><code>sync</code>, <code>seed</code>, <code>project_id</code>, <code>user_id</code>: As above</li>
+            </ul>
+            
+            <h4>Example:</h4>
+            <pre><code>with open("run1_leiden05.h5ad", "rb") as f1, \
+     open("run2_leiden10.h5ad", "rb") as f2:
+    
+    files = {
+        "run1_file": ("run1.h5ad", f1, "application/octet-stream"),
+        "run2_file": ("run2.h5ad", f2, "application/octet-stream")
+    }
+    data = {
+        "run2_name": "leiden_resolution_1.0",
+        "cluster_key": "leiden",
+        "latent_key": "X_pca",
+        "sync": "true"
+    }
+    
+    response = requests.post(
+        f"{API_URL}/api/v1/bio/evolution/report",
+        headers={"Authorization": f"Bearer {TOKEN}"},
+        files=files,
+        data=data
+    )
+
+result = response.json()
+print(f"Run 1: {result['run1_name']} ({result['n_cells_run1']} cells)")
+print(f"Run 2: {result['run2_name']} ({result['n_cells_run2']} cells)")
+print(f"Stability Score: {result['stability_score']:.1f}%")
+print(f"\\nDelta Metrics: {result['delta_metrics']}")</code></pre>
+            
+            <h4>Stability Score Interpretation:</h4>
+            <table>
+                <tr><th>Score</th><th>Interpretation</th></tr>
+                <tr><td>&gt; 90%</td><td>Excellent stability (robust pipeline)</td></tr>
+                <tr><td>70-90%</td><td>Good stability (acceptable variation)</td></tr>
+                <tr><td>50-70%</td><td>Moderate drift (review parameters)</td></tr>
+                <tr><td>&lt; 50%</td><td>High drift (investigate batch effects)</td></tr>
+            </table>
+            
+            <h3>Job Management</h3>
+            
+            <h4>Poll Job Status</h4>
+            <p><span class="badge success">GET</span> <code>/api/v1/bio/jobs/{job_id}</code></p>
+            <pre><code>response = requests.get(
+    f"{API_URL}/api/v1/bio/jobs/{job_id}",
+    headers={"Authorization": f"Bearer {TOKEN}"}
+)
+
+job = response.json()
+# Fields: job_id, endpoint, status, created_at, completed_at, result, error</code></pre>
+            
+            <h4>Retrieve Project Memory</h4>
+            <p><span class="badge success">GET</span> <code>/api/v1/bio/memory/{project_id}</code></p>
+            <pre><code>response = requests.get(
+    f"{API_URL}/api/v1/bio/memory/cai_lab_pbmc_study",
+    headers={"Authorization": f"Bearer {TOKEN}"}
+)
+
+memory = response.json()
+print(f"Project: {memory['project_id']}")
+print(f"Total Traces: {memory['count']}")
+
+for trace in memory['traces']:
+    print(f"  {trace['event_type']}: {trace['metrics']}")</code></pre>
+            
+            <div class="success-box">
+                <strong>💡 Pro Tips:</strong><br>
+                • Use <code>sync=true</code> for small datasets (&lt;5k cells)<br>
+                • Use <code>sync=false</code> for large datasets (&gt;10k cells)<br>
+                • Set <code>project_id</code> to group related operations<br>
+                • Monitor <code>trace_id</code> for debugging and audit trails<br>
+                • Check <code>parasite_score</code> before downstream analysis
+            </div>
         </section>
         
         <!-- Vector Structure -->
