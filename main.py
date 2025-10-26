@@ -8,8 +8,9 @@ CONFIDENTIAL - DON Systems LLC
 Patent-protected technology - Do not distribute
 """
 
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from uuid import uuid4
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Depends, Security, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -23,6 +24,8 @@ import sys
 import numpy as np
 from time import perf_counter
 from pathlib import Path
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.cron import CronTrigger
 
 # Add DON Stack to path (works both locally and in Docker)
 current_dir = Path(__file__).parent
@@ -950,6 +953,73 @@ else:
     logger.warning("⚠️ DON Stack Research API running with fallback implementations")
 
 _refresh_system_health()
+
+# ============================================================================
+# Artifact Cleanup Scheduler (Production Critical)
+# ============================================================================
+
+from src.artifact_cleanup import cleanup_old_artifacts
+
+# Initialize scheduler for artifact cleanup
+scheduler = BackgroundScheduler()
+scheduler.add_job(
+    cleanup_old_artifacts,
+    trigger=CronTrigger(hour=2, minute=0),  # Daily at 2 AM UTC
+    id='artifact_cleanup',
+    name='Clean up old artifacts (30 day retention)',
+    replace_existing=True
+)
+
+
+@app.on_event("startup")
+async def startup_event():
+    """
+    Initialize application on startup.
+    - Start artifact cleanup scheduler
+    - Run initial cleanup to free space
+    - Log system health status
+    """
+    logger.info("🚀 Starting DON Stack Research API...")
+    
+    # Start artifact cleanup scheduler
+    try:
+        scheduler.start()
+        logger.info("⏰ Artifact cleanup scheduler started (runs daily at 2 AM UTC)")
+    except Exception as e:
+        logger.error(f"Failed to start cleanup scheduler: {e}")
+    
+    # Run initial cleanup on startup
+    try:
+        stats = cleanup_old_artifacts()
+        logger.info(
+            f"🗑️  Initial cleanup: {stats['deleted_count']} files deleted, "
+            f"{stats['bytes_freed'] / (1024 * 1024):.2f} MB freed"
+        )
+    except Exception as e:
+        logger.error(f"Initial cleanup failed: {e}")
+    
+    # Log system health
+    health = get_system_health()
+    logger.info(f"💚 System health: {health}")
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """
+    Cleanup on application shutdown.
+    - Stop scheduler gracefully
+    """
+    logger.info("🛑 Shutting down DON Stack Research API...")
+    try:
+        scheduler.shutdown()
+        logger.info("⏰ Artifact cleanup scheduler stopped")
+    except Exception as e:
+        logger.error(f"Error stopping scheduler: {e}")
+
+
+# ============================================================================
+# Data Models
+# ============================================================================
 
 class GenomicsData(BaseModel):
     gene_names: List[str] = Field(..., description="Gene identifiers")
