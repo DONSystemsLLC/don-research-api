@@ -262,29 +262,30 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     """
     db = get_database()
     
+    # Ensure connection before yielding
     if not db.is_connected():
         await db.connect()
     
+    # db.get_session() is already an async context manager, just yield from it
     async with db.get_session() as session:
         yield session
 
 
-@asynccontextmanager
-async def db_session():
+def db_session():
     """
     Direct async context manager for database sessions.
     
     Usage:
         async with db_session() as session:
             result = await session.execute(query)
+    
+    Returns:
+        AsyncContextManager that yields AsyncSession
     """
-    db = get_database()
-    
-    if not db.is_connected():
-        await db.connect()
-    
-    async with db.get_session() as session:
-        yield session
+    # db.get_session() is decorated with @asynccontextmanager
+    # so it returns an async context manager directly
+    # Just return it - no wrapping needed
+    return get_database().get_session()
 
 
 async def init_database() -> None:
