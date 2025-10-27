@@ -185,6 +185,221 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
 - Joint research publication opportunities
 - Technical support and algorithm customization
 
+## Architecture & Operational Behavior
+
+### System Architecture
+
+The DON Research API is a **quantum-classical hybrid system** that bridges academic research with proprietary quantum computing technology:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     FastAPI Gateway                          │
+│  Authentication • Rate Limiting • Audit Logging • Routing   │
+└─────────────────────────────────────────────────────────────┘
+                            ↓
+        ┌───────────────────┴───────────────────┐
+        ↓                                       ↓
+┌──────────────────┐                  ┌──────────────────┐
+│  DON Stack       │                  │  Bio Module      │
+│  Adapter         │                  │  (AnnData)       │
+├──────────────────┤                  ├──────────────────┤
+│ • DON-GPU        │                  │ • H5AD Export    │
+│ • QAC Engine     │                  │ • Signal Sync    │
+│ • TACE Control   │                  │ • QC Workflows   │
+└──────────────────┘                  └──────────────────┘
+        ↓                                       ↓
+┌──────────────────────────────────────────────────────────────┐
+│           Quantum-Classical Processing Layer                  │
+│  Fractal Clustering • Error Correction • Vector Indexing     │
+└──────────────────────────────────────────────────────────────┘
+```
+
+### DON Stack Integration Modes
+
+The system operates in **dual-mode architecture** for maximum flexibility:
+
+#### Internal Mode (Default - Production)
+```python
+# Direct Python calls to stack/ modules
+DON_STACK_MODE=internal  # Default
+```
+- **Advantages**: Lower latency (~50ms saved), simpler deployment, no microservice overhead
+- **Use Case**: Production deployments, academic research, Render.com hosting
+- **Components**: DON-GPU (`stack/don_gpu/core.py`), QAC (`stack/tace/core.py`), TACE
+
+#### HTTP Mode (Microservices)
+```python
+# Microservices via separate DON-GPU and TACE servers
+DON_STACK_MODE=http
+DON_GPU_ENDPOINT=http://127.0.0.1:8001
+TACE_ENDPOINT=http://127.0.0.1:8002
+```
+- **Advantages**: Horizontal scaling, independent deployment, resource isolation
+- **Use Case**: Enterprise deployments, high-throughput workloads, distributed systems
+- **Components**: DON-GPU service (port 8001), TACE service (port 8002)
+
+**Switching Modes**: Set `DON_STACK_MODE` environment variable (requires service restart)
+
+### Health Monitoring
+
+The `/api/v1/health` endpoint provides comprehensive system status:
+
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-10-26T10:30:00Z",
+  "don_stack": {
+    "mode": "internal",          // or "http" for microservices
+    "adapter_loaded": true,
+    "version": "1.2.0"
+  },
+  "qac": {
+    "supported_engines": ["adjacency_v1", "adjacency_v2", "surface_code"],
+    "default_engine": "adjacency_v2",
+    "real_engine_available": true
+  },
+  "services": {
+    "compression": "operational",
+    "vector_search": "operational",
+    "bio_export": "operational"
+  }
+}
+```
+
+**Monitoring Strategy**:
+- **Production**: Poll `/health` every 60 seconds
+- **Critical Systems**: Alert on `status != "healthy"` or `adapter_loaded: false`
+- **Performance**: Track `don_stack.mode` to verify expected configuration
+
+### Data Retention & Cleanup
+
+**Automatic Retention Policies** (enforced by scheduled cleanup jobs):
+
+| Data Type | Retention | Auto-Cleanup | Override |
+|-----------|-----------|--------------|----------|
+| Input gene expression matrices | 24 hours | ✅ Automatic | Contact support |
+| Compressed vectors (temp) | 24 hours | ✅ Automatic | Use `project_id` |
+| Vector databases (FAISS) | 7 days | ✅ Automatic | Rebuild on demand |
+| Audit logs (`trace_id`) | 90 days | ✅ Archival | Extended for projects |
+| QAC models | 30 days | ✅ Automatic | Export before expiry |
+| Async job artifacts | 48 hours | ✅ Automatic | Download promptly |
+
+**Cleanup Scheduler**:
+- Runs hourly via background task (`@app.on_event("startup")`)
+- Logs cleanup operations to audit trail
+- No user intervention required
+- Extended retention available for active research projects
+
+**Best Practices**:
+1. Download results within 24 hours for temporary operations
+2. Use `project_id` to group related operations for longer retention
+3. Export QAC models before 30-day expiration
+4. Request extended retention for multi-month projects
+
+### Rate Limiting & Authentication
+
+**Per-Institution Hourly Limits**:
+
+```python
+# Configured in src/auth/authorized_institutions.py
+AUTHORIZED_INSTITUTIONS = {
+    "demo_token": {
+        "name": "Demo Access",
+        "rate_limit": 100  # requests/hour
+    },
+    "institution_token": {
+        "name": "Academic Institution",
+        "rate_limit": 1000  # requests/hour
+    }
+}
+```
+
+**Rate Limit Headers** (all responses):
+```http
+X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 995
+X-RateLimit-Reset: 1730044800  # Unix timestamp
+```
+
+**Rate Limit Exceeded (429 Response)**:
+```json
+{
+  "detail": "Rate limit exceeded: 1000/hour for Institution. Reset at 2025-10-26T14:00:00Z"
+}
+```
+
+**Usage Tracking**:
+- Resets every hour (UTC time boundaries)
+- Tracked in-memory (no persistent storage)
+- Check usage via `GET /api/v1/usage`
+
+**Authentication Flow**:
+1. Institution requests access → `research@donsystems.com`
+2. DON Systems issues bearer token (256-bit random)
+3. Token added to `AUTHORIZED_INSTITUTIONS` config
+4. All API requests include: `Authorization: Bearer <token>`
+5. Failed auth returns 401 with error message
+
+### Audit Logging & Traceability
+
+**Trace ID System** (every operation generates unique identifier):
+
+**Format**: `{institution}_{date}_{operation}_{uuid}`  
+**Example**: `tamu_20251026_compress_abc123xyz`
+
+**Logged Metadata** (no actual data):
+- Timestamp (ISO 8601 UTC)
+- Institution name
+- Endpoint called
+- Operation type (compress, search, export, etc.)
+- Input parameters (dimensions, seed, project_id)
+- Output metrics (compression ratio, runtime, errors)
+
+**Memory Endpoint** (retrieve traces):
+```bash
+GET /api/v1/bio/memory/{project_id}
+```
+
+**Use Cases**:
+- Reproducibility: Track exact parameters for published results
+- Debugging: Trace errors through multi-step workflows
+- Compliance: Audit trail for institutional review
+- Collaboration: Share trace IDs with co-investigators
+
+### Deployment Status
+
+**Current Deployment**: Render.com (US-East)  
+**Service Type**: Web Service (Docker container)  
+**Health Endpoint**: `https://don-research-api.onrender.com/api/v1/health`  
+**Interactive Docs**: `https://don-research-api.onrender.com/docs`
+
+**Production Configuration**:
+```bash
+# Environment Variables (Render.com)
+PYTHON_VERSION=3.11
+PORT=8080
+DON_STACK_MODE=internal
+DON_AUTHORIZED_INSTITUTIONS_JSON=<encrypted_json>
+```
+
+**Build Process**:
+1. Git push to `main` branch
+2. Render.com detects changes
+3. `pip install -r requirements.txt` (2-3 minutes)
+4. `uvicorn main:app --host 0.0.0.0 --port $PORT`
+5. Health check passes → live traffic
+
+**Zero-Downtime Deployments**:
+- Render.com blue-green deployment pattern
+- Old containers remain live until new containers healthy
+- Automatic rollback on health check failure
+
+**Monitoring & Alerts**:
+- Uptime monitoring via Render.com dashboard
+- Email alerts for service failures
+- Performance metrics (response time, memory usage)
+- Error rate tracking (500/429 responses)
+
 ## Technical Specifications
 
 ### DON Stack Components
@@ -216,12 +431,51 @@ CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8080"]
 - 🔒 Encrypted data transmission
 - 📋 Audit logging for compliance
 
+## Documentation
+
+Comprehensive documentation is available in the `docs/` directory:
+
+### 📘 [API Reference](docs/API_REFERENCE.md)
+Complete endpoint documentation with request/response schemas, authentication, rate limiting, error handling, and performance characteristics.
+
+**Coverage**: 22 endpoints across 4 modules (Main API, Bio Module, QAC, Genomics Router)  
+**Validation**: 42/42 automated tests passing (100% test coverage)  
+**Examples**: Python + cURL for every endpoint
+
+### 🎓 [Texas A&M Integration Guide](docs/TAMU_INTEGRATION.md)
+Step-by-step guide for single-cell genomics research using Scanpy pipelines.
+
+**Target Audience**: Graduate students and postdocs in genomics laboratories  
+**Coverage**: Complete Scanpy pipeline, cell type discovery, QC workflows, evolution tracking  
+**Validation**: 15/15 automated tests passing  
+**Includes**: Distance interpretation tables, contamination scoring, reproducibility best practices
+
+### 🔒 [Data Policy & Security](docs/DATA_POLICY.md)
+Comprehensive data handling, privacy, security, and IP protection policies.
+
+**Coverage**: Data ownership, retention (24h-90d), GDPR/HIPAA compliance, IP protection  
+**Sections**: 12 major sections + 3 appendices  
+**Includes**: Patent status, trade secrets, acceptable use policy, incident response process
+
+### 🚀 [Render.com Deployment Guide](docs/RENDER_DEPLOYMENT.md)
+Production deployment guide for Render.com hosting platform.
+
+**Coverage**: Environment variables, build configuration, health checks, monitoring  
+**Status**: Coming soon
+
+### Interactive Documentation
+
+**OpenAPI/Swagger UI**: `https://your-deployment.onrender.com/docs`  
+**HTML Help Page**: `https://your-deployment.onrender.com/help`  
+
 ## Support
 
 - 📧 **Research Inquiries**: [research@donsystems.com](mailto:research@donsystems.com)
 - 🐛 **Technical Issues**: [support@donsystems.com](mailto:support@donsystems.com)
-- 📖 **Documentation**: [API Docs](https://your-deployment.onrender.com/docs)
+- 📖 **Documentation**: See `docs/` directory or [API Docs](https://your-deployment.onrender.com/docs)
 - 💬 **Collaboration**: [partnerships@donsystems.com](mailto:partnerships@donsystems.com)
+- 🔐 **Security Issues**: [security@donsystems.com](mailto:security@donsystems.com)
+- ⚖️ **Compliance & Legal**: [compliance@donsystems.com](mailto:compliance@donsystems.com)
 
 ## License
 
