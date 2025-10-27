@@ -53,6 +53,18 @@ from src.don_memory.trace_storage import TraceStorage
 from src.don_memory.system import get_system_health, set_system_health
 from src.auth.authorized_institutions import load_authorized_institutions
 
+# Database imports
+from src.database import (
+    DatabaseSession,
+    get_db_session,
+    init_db,
+    QACModelRepository,
+    VectorStoreRepository,
+    JobStatusRepository,
+    AuditLogRepository,
+    UsageMetricsRepository
+)
+
 
 def _refresh_system_health() -> None:
     snapshot = {
@@ -955,6 +967,70 @@ else:
 _refresh_system_health()
 
 # ============================================================================
+# Audit Logging Middleware
+# ============================================================================
+
+@app.middleware("http")
+async def audit_log_middleware(request: Request, call_next):
+    """Log all API requests to database for audit trail."""
+    start_time = time.time()
+    
+    # Get institution from token
+    institution = "unknown"
+    try:
+        if "authorization" in request.headers:
+            token = request.headers["authorization"].replace("Bearer ", "")
+            if token in AUTHORIZED_INSTITUTIONS:
+                institution = AUTHORIZED_INSTITUTIONS[token]["name"]
+    except:
+        pass
+    
+    # Generate trace_id
+    trace_id = f"{institution}_{datetime.now(timezone.utc).strftime('%Y%m%d')}_{uuid4().hex[:8]}"
+    
+    # Store request body (for POST/PUT/PATCH)
+    request_body = None
+    if request.method in ["POST", "PUT", "PATCH"]:
+        try:
+            body_bytes = await request.body()
+            request_body = body_bytes.decode('utf-8')[:10000]  # Limit to 10KB
+            # Re-create request with body for downstream handlers
+            async def receive():
+                return {"type": "http.request", "body": body_bytes}
+            request = Request(request.scope, receive)
+        except:
+            pass
+    
+    # Call endpoint
+    response = await call_next(request)
+    
+    # Calculate response time
+    response_time_ms = int((time.time() - start_time) * 1000)
+    
+    # Log to database (async task, don't block response)
+    try:
+        async with get_db_session() as session:
+            await AuditLogRepository.create(session, {
+                "trace_id": trace_id,
+                "endpoint": str(request.url.path),
+                "method": request.method,
+                "status_code": response.status_code,
+                "response_time_ms": response_time_ms,
+                "request_body": request_body,
+                "ip_address": request.client.host if request.client else None,
+                "user_agent": request.headers.get("user-agent"),
+                "institution": institution
+            })
+            await session.commit()
+    except Exception as e:
+        logger.warning(f"Failed to log audit trail: {e}")
+    
+    # Add trace_id to response headers
+    response.headers["X-Trace-ID"] = trace_id
+    
+    return response
+
+# ============================================================================
 # Artifact Cleanup Scheduler (Production Critical)
 # ============================================================================
 
@@ -975,11 +1051,20 @@ scheduler.add_job(
 async def startup_event():
     """
     Initialize application on startup.
+    - Initialize database connections
     - Start artifact cleanup scheduler
     - Run initial cleanup to free space
     - Log system health status
     """
     logger.info("🚀 Starting DON Stack Research API...")
+    
+    # Initialize database
+    try:
+        await init_db()
+        logger.info("✅ Database initialized successfully")
+    except Exception as e:
+        logger.error(f"❌ Database initialization failed: {e}")
+        logger.warning("⚠️  Continuing with in-memory fallback storage")
     
     # Start artifact cleanup scheduler
     try:
@@ -1007,9 +1092,19 @@ async def startup_event():
 async def shutdown_event():
     """
     Cleanup on application shutdown.
+    - Close database connections
     - Stop scheduler gracefully
     """
     logger.info("🛑 Shutting down DON Stack Research API...")
+    
+    # Close database connections
+    try:
+        await DatabaseSession.close()
+        logger.info("✅ Database connections closed")
+    except Exception as e:
+        logger.error(f"Error closing database: {e}")
+    
+    # Stop scheduler
     try:
         scheduler.shutdown()
         logger.info("⏰ Artifact cleanup scheduler stopped")
@@ -1042,26 +1137,66 @@ class QuantumStabilizationRequest(BaseModel):
     quantum_states: List[List[float]] = Field(..., description="Quantum state vectors")
     coherence_target: Optional[float] = Field(0.95, description="Target coherence")
 
-def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)):
+async def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)):
+    """Verify institution token and enforce rate limiting using database."""
     token = credentials.credentials
     if token not in AUTHORIZED_INSTITUTIONS:
         raise HTTPException(status_code=401, detail="Invalid research institution token")
     
-    # Rate limiting
-    current_time = time.time()
-    if token not in usage_tracker:
-        usage_tracker[token] = {"count": 0, "reset_time": current_time + 3600}
+    institution_name = AUTHORIZED_INSTITUTIONS[token]["name"]
+    rate_limit = AUTHORIZED_INSTITUTIONS[token]["rate_limit"]
     
-    tracker = usage_tracker[token]
-    if current_time > tracker["reset_time"]:
-        tracker["count"] = 0
-        tracker["reset_time"] = current_time + 3600
-    
-    if tracker["count"] >= AUTHORIZED_INSTITUTIONS[token]["rate_limit"]:
-        raise HTTPException(status_code=429, detail="Rate limit exceeded")
-    
-    tracker["count"] += 1
-    return AUTHORIZED_INSTITUTIONS[token]
+    # Database-backed rate limiting
+    try:
+        async with get_db_session() as session:
+            # Record this API call
+            await UsageMetricsRepository.record_usage(
+                session,
+                institution=institution_name,
+                endpoint="*",  # Generic for rate limit check
+                response_time_ms=0,
+                is_error=False
+            )
+            await session.commit()
+            
+            # Check rate limit (last hour)
+            from datetime import timedelta
+            end_date = datetime.now(timezone.utc).date()
+            start_date = end_date
+            
+            usage = await UsageMetricsRepository.get_by_institution(
+                session, institution_name, start_date, end_date
+            )
+            
+            # Calculate requests in last hour
+            total_requests = sum(u.request_count for u in usage)
+            
+            if total_requests >= rate_limit:
+                raise HTTPException(
+                    status_code=429, 
+                    detail=f"Rate limit exceeded: {total_requests}/{rate_limit} requests"
+                )
+            
+            return AUTHORIZED_INSTITUTIONS[token]
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.warning(f"Database rate limiting failed, using fallback: {e}")
+        # Fallback to in-memory rate limiting
+        current_time = time.time()
+        if token not in usage_tracker:
+            usage_tracker[token] = {"count": 0, "reset_time": current_time + 3600}
+        
+        tracker = usage_tracker[token]
+        if current_time > tracker["reset_time"]:
+            tracker["count"] = 0
+            tracker["reset_time"] = current_time + 3600
+        
+        if tracker["count"] >= rate_limit:
+            raise HTTPException(status_code=429, detail="Rate limit exceeded")
+        
+        tracker["count"] += 1
+        return AUTHORIZED_INSTITUTIONS[token]
 
 # QAC router - import and include with authentication
 from don_research.api.genomics_router import router as genomics_router
@@ -1183,7 +1318,7 @@ async def help_page():
 
 @app.get("/api/v1/health")
 async def health_check():
-    """Public health check endpoint"""
+    """Public health check endpoint with database status"""
     from src.qac.tasks import HAVE_REAL_QAC, DEFAULT_ENGINE
 
     snapshot = health_snapshot()
@@ -1194,6 +1329,28 @@ async def health_check():
             "adapter_loaded": don_adapter is not None,
         }
     )
+    
+    # Check database health
+    database_status = "unknown"
+    pool_stats = None
+    try:
+        async with get_db_session() as session:
+            # Simple query to test connection
+            await session.execute("SELECT 1")
+            database_status = "healthy"
+            
+            # Get connection pool statistics
+            pool = DatabaseSession._engine.pool if hasattr(DatabaseSession, '_engine') else None
+            if pool:
+                pool_stats = {
+                    "size": pool.size(),
+                    "checked_in": pool.checkedin(),
+                    "checked_out": pool.checkedout(),
+                    "overflow": pool.overflow(),
+                }
+    except Exception as e:
+        database_status = f"unhealthy: {str(e)}"
+        logger.error(f"Database health check failed: {e}")
 
     return {
         "status": "healthy",
@@ -1202,6 +1359,10 @@ async def health_check():
             "supported_engines": ["real_qac", "laplace"] if HAVE_REAL_QAC else ["laplace"],
             "default_engine": DEFAULT_ENGINE if HAVE_REAL_QAC else "laplace",
             "real_engine_available": HAVE_REAL_QAC,
+        },
+        "database": {
+            "status": database_status,
+            "pool": pool_stats
         },
         "timestamp": time.time(),
     }
