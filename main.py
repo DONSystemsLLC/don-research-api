@@ -1015,14 +1015,19 @@ async def audit_log_middleware(request: Request, call_next):
             audit_repo = AuditRepository(session)
             await audit_repo.create({
                 "trace_id": trace_id,
-                "endpoint": str(request.url.path),
-                "method": request.method,
-                "status_code": response.status_code,
-                "response_time_ms": response_time_ms,
-                "request_body": request_body,
+                "action": f"{request.method} {request.url.path}",  # Map endpoint+method to action
+                "institution": institution,
+                "resource_type": "http_request",
+                "resource_id": str(request.url.path),
                 "ip_address": request.client.host if request.client else None,
                 "user_agent": request.headers.get("user-agent"),
-                "institution": institution
+                "audit_metadata": {  # Store HTTP details in metadata JSON
+                    "method": request.method,
+                    "endpoint": str(request.url.path),
+                    "status_code": response.status_code,
+                    "response_time_ms": response_time_ms,
+                    "request_body": request_body
+                }
             })
             await session.commit()
     except Exception as e:
