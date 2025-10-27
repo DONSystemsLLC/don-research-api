@@ -57,6 +57,7 @@ from src.auth.authorized_institutions import load_authorized_institutions
 from src.database import (
     DatabaseSession,
     get_db_session,
+    db_session,
     get_database,
     init_database,
     QACRepository,
@@ -1010,7 +1011,7 @@ async def audit_log_middleware(request: Request, call_next):
     
     # Log to database (async task, don't block response)
     try:
-        async with get_db_session() as session:
+        async with db_session() as session:
             await AuditRepository.create(session, {
                 "trace_id": trace_id,
                 "endpoint": str(request.url.path),
@@ -1149,7 +1150,7 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Security(secu
     
     # Database-backed rate limiting
     try:
-        async with get_db_session() as session:
+        async with db_session() as session:
             # Record this API call
             await UsageRepository.record_usage(
                 session,
@@ -1336,7 +1337,7 @@ async def health_check():
     database_status = "unknown"
     pool_stats = None
     try:
-        async with get_db_session() as session:
+        async with db_session() as session:
             # Simple query to test connection
             await session.execute(text("SELECT 1"))
             database_status = "healthy"

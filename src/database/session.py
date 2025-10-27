@@ -251,7 +251,6 @@ def get_database() -> DatabaseSession:
     return _db_instance
 
 
-@asynccontextmanager
 async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
     """
     FastAPI dependency for database sessions.
@@ -260,9 +259,23 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
         @app.get("/endpoint")
         async def endpoint(db: AsyncSession = Depends(get_db_session)):
             result = await db.execute(query)
+    """
+    db = get_database()
     
-    Can also be used as async context manager:
-        async with get_db_session() as session:
+    if not db.is_connected():
+        await db.connect()
+    
+    async with db.get_session() as session:
+        yield session
+
+
+@asynccontextmanager
+async def db_session():
+    """
+    Direct async context manager for database sessions.
+    
+    Usage:
+        async with db_session() as session:
             result = await session.execute(query)
     """
     db = get_database()

@@ -17,6 +17,7 @@ from .session import (
     DatabaseSession,
     get_database,
     get_db_session,
+    db_session,
     init_database,
     close_database
 )
@@ -45,6 +46,7 @@ __all__ = [
     "DatabaseSession",
     "get_database",
     "get_db_session",
+    "db_session",
     "init_database",
     "close_database",
     
