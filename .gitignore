@@ -157,6 +157,9 @@ logs/
 *.tmp
 *.temp
 
+# API tokens and institution configurations (NEVER commit real tokens)
+config/authorized_institutions.json
+
 # Local dataset files (keep on local machine only)
 real_pbmc*.json
 real_pbmc_*.json
