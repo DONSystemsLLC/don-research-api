@@ -57,6 +57,7 @@ from src.auth.authorized_institutions import load_authorized_institutions
 from src.database import (
     DatabaseSession,
     get_db_session,
+    get_database,
     init_database,
     QACRepository,
     VectorRepository,
@@ -1320,6 +1321,7 @@ async def help_page():
 async def health_check():
     """Public health check endpoint with database status"""
     from src.qac.tasks import HAVE_REAL_QAC, DEFAULT_ENGINE
+    from sqlalchemy import text
 
     snapshot = health_snapshot()
     snapshot.setdefault("don_stack", {})
@@ -1336,12 +1338,13 @@ async def health_check():
     try:
         async with get_db_session() as session:
             # Simple query to test connection
-            await session.execute("SELECT 1")
+            await session.execute(text("SELECT 1"))
             database_status = "healthy"
             
             # Get connection pool statistics
-            pool = DatabaseSession._engine.pool if hasattr(DatabaseSession, '_engine') else None
-            if pool:
+            db = get_database()
+            if db.is_connected() and db.engine:
+                pool = db.engine.pool
                 pool_stats = {
                     "size": pool.size(),
                     "checked_in": pool.checkedin(),
