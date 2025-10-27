@@ -14,7 +14,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Depends, Security, Request
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import JSONResponse, HTMLResponse, RedirectResponse
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
 import os
@@ -1047,7 +1047,7 @@ app = FastAPI(
     title="DON Stack Research API",
     description="Quantum-enhanced data processing for genomics research",
     version="1.0.0",
-    docs_url="/docs",
+    docs_url=None,  # Disable default docs, we'll use custom /docs endpoint
     redoc_url="/redoc"
 )
 
@@ -1408,16 +1408,8 @@ def don_gpu_embed(X: np.ndarray, k: int, seed: Optional[int] = None, stabilize: 
 
 @app.get("/")
 async def root():
-    return {
-        "service": "DON Stack Research API",
-        "status": "active",
-        "version": "1.0.0",
-        "description": "Quantum-enhanced data processing for genomics research",
-        "contact": "research@donsystems.com",
-        "don_stack_status": "REAL" if REAL_DON_STACK else "FALLBACK",
-        "note": "Private deployment with proprietary DON Stack implementations",
-        "help_url": "/help"
-    }
+    """Redirect root URL to Swagger UI documentation."""
+    return RedirectResponse(url="/docs")
 
 
 @app.get("/help", response_class=HTMLResponse)
@@ -1430,6 +1422,67 @@ async def help_page():
 async def guide_page():
     """Serve comprehensive user guide with Swagger tutorial and Bio module docs."""
     return HTMLResponse(content=GUIDE_PAGE_HTML)
+
+
+@app.get("/docs", response_class=HTMLResponse, include_in_schema=False)
+async def custom_swagger_ui_html():
+    """Custom Swagger UI with navigation links."""
+    return HTMLResponse(content=f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8"/>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{app.title} - API Documentation</title>
+        <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+        <style>
+            #custom-nav {{
+                background: linear-gradient(135deg, #0b3d91 0%, #11203f 100%);
+                padding: 16px 24px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                position: sticky;
+                top: 0;
+                z-index: 1000;
+            }}
+            #custom-nav a {{
+                color: #fff;
+                text-decoration: none;
+                margin-right: 24px;
+                font-weight: 500;
+                font-size: 14px;
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                transition: opacity 0.2s;
+            }}
+            #custom-nav a:hover {{
+                opacity: 0.8;
+                text-decoration: underline;
+            }}
+        </style>
+    </head>
+    <body>
+        <div id="custom-nav">
+            <a href="/docs">🔬 API Docs (Swagger)</a>
+            <a href="/help">📚 Quick Start</a>
+            <a href="/guide">📘 Complete Guide</a>
+        </div>
+        <div id="swagger-ui"></div>
+        <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+        <script>
+            window.onload = () => {{
+                window.ui = SwaggerUIBundle({{
+                    url: '/openapi.json',
+                    dom_id: '#swagger-ui',
+                    persistAuthorization: true,
+                    presets: [
+                        SwaggerUIBundle.presets.apis,
+                        SwaggerUIBundle.SwaggerUIStandalonePreset
+                    ],
+                }});
+            }};
+        </script>
+    </body>
+    </html>
+    """)
 
 
 @app.get("/api/v1/health")
