@@ -57,12 +57,12 @@ from src.auth.authorized_institutions import load_authorized_institutions
 from src.database import (
     DatabaseSession,
     get_db_session,
-    init_db,
-    QACModelRepository,
-    VectorStoreRepository,
-    JobStatusRepository,
-    AuditLogRepository,
-    UsageMetricsRepository
+    init_database,
+    QACRepository,
+    VectorRepository,
+    JobRepository,
+    AuditRepository,
+    UsageRepository
 )
 
 
@@ -1010,7 +1010,7 @@ async def audit_log_middleware(request: Request, call_next):
     # Log to database (async task, don't block response)
     try:
         async with get_db_session() as session:
-            await AuditLogRepository.create(session, {
+            await AuditRepository.create(session, {
                 "trace_id": trace_id,
                 "endpoint": str(request.url.path),
                 "method": request.method,
@@ -1060,7 +1060,7 @@ async def startup_event():
     
     # Initialize database
     try:
-        await init_db()
+        await init_database()
         logger.info("✅ Database initialized successfully")
     except Exception as e:
         logger.error(f"❌ Database initialization failed: {e}")
@@ -1150,7 +1150,7 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Security(secu
     try:
         async with get_db_session() as session:
             # Record this API call
-            await UsageMetricsRepository.record_usage(
+            await UsageRepository.record_usage(
                 session,
                 institution=institution_name,
                 endpoint="*",  # Generic for rate limit check
@@ -1164,7 +1164,7 @@ async def verify_token(credentials: HTTPAuthorizationCredentials = Security(secu
             end_date = datetime.now(timezone.utc).date()
             start_date = end_date
             
-            usage = await UsageMetricsRepository.get_by_institution(
+            usage = await UsageRepository.get_by_institution(
                 session, institution_name, start_date, end_date
             )
             
