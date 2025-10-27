@@ -1353,8 +1353,10 @@ async def health_check():
                     "overflow": pool.overflow(),
                 }
     except Exception as e:
+        import traceback
         database_status = f"unhealthy: {str(e)}"
         logger.error(f"Database health check failed: {e}")
+        logger.error(f"Traceback: {traceback.format_exc()}")
 
     return {
         "status": "healthy",
@@ -1366,7 +1368,8 @@ async def health_check():
         },
         "database": {
             "status": database_status,
-            "pool": pool_stats
+            "pool": pool_stats,
+            "version": "v5"  # Version marker to confirm deployment
         },
         "timestamp": time.time(),
     }
