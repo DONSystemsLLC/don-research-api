@@ -137,7 +137,6 @@ class DatabaseSession:
         return self.engine is not None and self.session_maker is not None
     
     @asynccontextmanager
-    @asynccontextmanager
     async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
         """
         Get a database session with automatic cleanup.
