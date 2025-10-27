@@ -196,6 +196,7 @@ HELP_PAGE_HTML = """<!DOCTYPE html>
         <a href="#workflows">Workflows</a>
         <a href="#troubleshooting">Troubleshooting</a>
         <a href="#support">Support</a>
+        <a href="/guide">📘 Complete Guide</a>
         <a href="/docs">API Docs</a>
     </nav>
     
@@ -208,8 +209,55 @@ HELP_PAGE_HTML = """<!DOCTYPE html>
             <ul>
                 <li><strong>Python 3.11+</strong> installed</li>
                 <li><strong>API Token</strong> (provided via secure email)</li>
-                <li><strong>Data Format:</strong> Single-cell RNA-seq in <code>.h5ad</code> format (AnnData)</li>
+                <li><strong>Data Formats:</strong> Multiple input formats supported (see below)</li>
             </ul>
+            
+            <h3>Supported Data Formats</h3>
+            <table>
+                <tr>
+                    <th>Format</th>
+                    <th>Example</th>
+                    <th>Use Case</th>
+                    <th>Endpoints</th>
+                </tr>
+                <tr>
+                    <td><strong>H5AD Files</strong></td>
+                    <td><code>pbmc3k.h5ad</code></td>
+                    <td>Direct upload of single-cell data</td>
+                    <td>All genomics + Bio module</td>
+                </tr>
+                <tr>
+                    <td><strong>GEO Accessions</strong></td>
+                    <td><code>GSE12345</code></td>
+                    <td>Auto-download from NCBI GEO</td>
+                    <td><code>/load</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Direct URLs</strong></td>
+                    <td><code>https://example.com/data.h5ad</code></td>
+                    <td>Download from external sources</td>
+                    <td><code>/load</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Gene Lists (JSON)</strong></td>
+                    <td><code>["CD3E", "CD8A", "CD4"]</code></td>
+                    <td>Encode cell type markers as queries</td>
+                    <td><code>/query/encode</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Text Queries</strong></td>
+                    <td><code>"T cell markers"</code></td>
+                    <td>Natural language searches</td>
+                    <td><code>/query/encode</code></td>
+                </tr>
+            </table>
+            
+            <div class="info-box">
+                <strong>📌 Format Notes:</strong><br>
+                • <strong>Genomics endpoints</strong> accept all formats above<br>
+                • <strong>Bio module</strong> requires H5AD files only (for ResoTrace integration)<br>
+                • GEO accessions and URLs are automatically converted to H5AD format
+            </div>
             
             <h3>Installation</h3>
             <pre><code># Create virtual environment
@@ -235,6 +283,56 @@ print(response.json())
             <div class="success-box">
                 <strong>✓ System Ready!</strong> If health check returns <code>{"status": "ok"}</code>, you're connected and authenticated.
             </div>
+            
+            <h3>Format-Specific Examples</h3>
+            
+            <h4>Example 1: H5AD File Upload</h4>
+            <pre><code>with open("pbmc3k.h5ad", "rb") as f:
+    files = {"file": ("pbmc3k.h5ad", f, "application/octet-stream")}
+    response = requests.post(
+        f"{API_URL}/api/v1/genomics/vectors/build",
+        headers=headers,
+        files=files,
+        data={"mode": "cluster"}
+    )
+print(response.json())</code></pre>
+            
+            <h4>Example 2: GEO Accession</h4>
+            <pre><code># Automatically downloads from NCBI GEO
+data = {"accession_or_path": "GSE12345"}
+response = requests.post(
+    f"{API_URL}/api/v1/genomics/load",
+    headers=headers,
+    data=data
+)
+h5ad_path = response.json()["h5ad_path"]</code></pre>
+            
+            <h4>Example 3: Gene List Query</h4>
+            <pre><code>import json
+
+# T cell markers
+gene_list = ["CD3E", "CD8A", "CD4", "IL7R"]
+data = {"gene_list_json": json.dumps(gene_list)}
+response = requests.post(
+    f"{API_URL}/api/v1/genomics/query/encode",
+    headers=headers,
+    data=data
+)
+query_vector = response.json()["psi"]  # 128-dimensional vector</code></pre>
+            
+            <h4>Example 4: Text Query</h4>
+            <pre><code># Natural language query
+data = {
+    "text": "T cell markers in PBMC tissue",
+    "cell_type": "T cell",
+    "tissue": "PBMC"
+}
+response = requests.post(
+    f"{API_URL}/api/v1/genomics/query/encode",
+    headers=headers,
+    data=data
+)
+query_vector = response.json()["psi"]</code></pre>
         </section>
         
         <!-- System Overview -->
@@ -942,6 +1040,9 @@ adata.write_h5ad("cleaned_data.h5ad")</code></pre>
 </body>
 </html>"""
 
+# Import comprehensive guide HTML
+from src.guide_html import GUIDE_PAGE_HTML
+
 app = FastAPI(
     title="DON Stack Research API",
     description="Quantum-enhanced data processing for genomics research",
@@ -1323,6 +1424,13 @@ async def root():
 async def help_page():
     """Serve a researcher-facing help page without exposing IP details."""
     return HTMLResponse(content=HELP_PAGE_HTML)
+
+
+@app.get("/guide", response_class=HTMLResponse)
+async def guide_page():
+    """Serve comprehensive user guide with Swagger tutorial and Bio module docs."""
+    return HTMLResponse(content=GUIDE_PAGE_HTML)
+
 
 @app.get("/api/v1/health")
 async def health_check():
