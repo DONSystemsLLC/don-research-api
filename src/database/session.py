@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     async_sessionmaker
 )
-from sqlalchemy.pool import NullPool, QueuePool
+from sqlalchemy.pool import NullPool, AsyncAdaptedQueuePool
 from sqlalchemy import text
 
 from .models import Base
@@ -72,12 +72,15 @@ class DatabaseSession:
         self.session_maker: Optional[async_sessionmaker] = None
         
         # Connection pool settings
+        # Note: For async engines, SQLAlchemy automatically uses AsyncAdaptedQueuePool
+        # when poolclass is not specified. NullPool is used for testing.
         if test_mode:
             self.pool_class = NullPool
             self.pool_size = 0
             self.max_overflow = 0
         else:
-            self.pool_class = QueuePool
+            # For async engines, do NOT specify poolclass - let SQLAlchemy handle it
+            self.pool_class = None  # SQLAlchemy will use appropriate async pool
             self.pool_size = pool_size
             self.max_overflow = max_overflow
     
@@ -89,14 +92,30 @@ class DatabaseSession:
             try:
                 logger.info(f"Connecting to database (attempt {attempt + 1}/{self.max_retries})...")
                 
-                # Create engine
+                # Create engine - for async engines, omit poolclass to let SQLAlchemy
+                # use the appropriate async pool automatically
+                engine_kwargs = {
+                    "pool_pre_ping": True,  # Verify connections before using
+                    "echo": self.test_mode,  # Log SQL in test mode
+                }
+                
+                # Add pool configuration based on database type
+                # Only PostgreSQL supports pool_size/max_overflow with async engines
+                is_sqlite = "sqlite" in self.database_url.lower()
+                
+                if is_sqlite:
+                    # SQLite doesn't support pool configuration parameters
+                    if self.test_mode:
+                        engine_kwargs["poolclass"] = self.pool_class
+                else:
+                    # PostgreSQL: use pool_size and max_overflow
+                    # SQLAlchemy will use AsyncAdaptedQueuePool automatically
+                    engine_kwargs["pool_size"] = self.pool_size
+                    engine_kwargs["max_overflow"] = self.max_overflow
+                
                 self.engine = create_async_engine(
                     self.database_url,
-                    poolclass=self.pool_class,
-                    pool_size=self.pool_size,
-                    max_overflow=self.max_overflow,
-                    pool_pre_ping=True,  # Verify connections before using
-                    echo=self.test_mode,  # Log SQL in test mode
+                    **engine_kwargs
                 )
                 
                 # Create session maker
@@ -271,7 +290,8 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-def db_session():
+@asynccontextmanager
+async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """
     Direct async context manager for database sessions.
     
@@ -279,13 +299,18 @@ def db_session():
         async with db_session() as session:
             result = await session.execute(query)
     
-    Returns:
-        AsyncContextManager that yields AsyncSession
+    Yields:
+        AsyncSession: Database session with automatic transaction management
     """
-    # db.get_session() is decorated with @asynccontextmanager
-    # so it returns an async context manager directly
-    # Just return it - no wrapping needed
-    return get_database().get_session()
+    db = get_database()
+    
+    # Ensure connection before yielding
+    if not db.is_connected():
+        await db.connect()
+    
+    # Use the underlying get_session() context manager
+    async with db.get_session() as session:
+        yield session
 
 
 async def init_database() -> None:
