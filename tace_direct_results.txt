@@ -1,0 +1,12 @@
+
+======================================================================
+  🔧 INITIALIZING DON STACK ADAPTER
+======================================================================
+
+✓ DON Stack Adapter initialized
+  Mode: internal
+Traceback (most recent call last):
+  File "/Users/donnievanmetre/don-research-api/tace_direct_test.py", line 34, in <module>
+    print(f"  Available: normalize={adapter.available}, tune_alpha={adapter.available}")
+                                    ^^^^^^^^^^^^^^^^^
+AttributeError: 'DONStackAdapter' object has no attribute 'available'

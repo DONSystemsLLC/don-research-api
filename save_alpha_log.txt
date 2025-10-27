@@ -1,0 +1,39 @@
+WARNING: adata.X seems to be already log-transformed.
+/Users/donnievanmetre/don-research-api/save_alpha_values.py:38: FutureWarning: In the future, the default backend for leiden will be igraph instead of leidenalg.
+
+ To achieve the future defaults please pass: flavor="igraph" and n_iterations=2.  directed must also be False to work with igraph's implementation.
+  sc.tl.leiden(adata, resolution=0.5)
+================================================================================
+SAVING ALPHA VALUES FOR INTERACTIVE QUERY TOOL
+================================================================================
+
+Loading PBMC3K dataset...
+Preprocessing...
+✓ Loaded 2700 cells × 13714 genes
+✓ Found 7 clusters
+
+Initializing DON Stack adapter...
+
+Computing alpha for all 2700 cells...
+  Processed 500/2700 cells...
+  Processed 1000/2700 cells...
+  Processed 1500/2700 cells...
+  Processed 2000/2700 cells...
+  Processed 2500/2700 cells...
+
+✓ Computed alpha for all 2700 cells
+
+Alpha Statistics:
+  Mean:  0.3802
+  Std:   0.3256
+  Range: [0.1000, 0.9000]
+
+Alpha Regime Distribution:
+  Low  (<0.3):   1529 cells (56.6%)
+  Mid  (0.3-0.7):  467 cells (17.3%)
+  High (>0.7):    704 cells (26.1%)
+
+Saving alpha values to gene_analysis_alpha_results.json...
+✓ Saved alpha values for 2700 cells
+
+You can now use: python interactive_gene_query.py

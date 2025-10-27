@@ -1,0 +1,111 @@
+{
+  "timestamp": "2025-10-27T09:47:48.978837",
+  "method": "TACE Alpha Computation",
+  "parameters": {
+    "qac_num_qubits": 8,
+    "qac_layers": 3,
+    "qac_reinforce_rate": 0.05,
+    "tace_collapse_threshold": 0.975,
+    "tace_feedback_gain": 0.3,
+    "tace_max_iterations": 10,
+    "default_alpha": 0.5
+  },
+  "n_cells": 2700,
+  "n_clusters": 8,
+  "alpha_distribution": {
+    "overall": {
+      "min": 0.1,
+      "max": 0.9,
+      "mean": 0.546481719810536,
+      "std": 0.3481374000230806,
+      "median": 0.5877939244999999,
+      "q1": 0.12660411144282502,
+      "q3": 0.9
+    },
+    "regimes": {
+      "low": 968,
+      "mid": 461,
+      "high": 1271
+    },
+    "by_cluster": [
+      {
+        "cluster": "0",
+        "n_cells": 1151,
+        "mean_alpha": 0.22633800783919975,
+        "std_alpha": 0.17553046089682325,
+        "min_alpha": 0.1,
+        "max_alpha": 0.9,
+        "median_alpha": 0.1035249901592
+      },
+      {
+        "cluster": "1",
+        "n_cells": 509,
+        "mean_alpha": 0.8997029094800788,
+        "std_alpha": 0.006696080251147358,
+        "min_alpha": 0.74878092536,
+        "max_alpha": 0.9,
+        "median_alpha": 0.9
+      },
+      {
+        "cluster": "2",
+        "n_cells": 348,
+        "mean_alpha": 0.8985292786867127,
+        "std_alpha": 0.011797846261802341,
+        "min_alpha": 0.74595386939,
+        "max_alpha": 0.9,
+        "median_alpha": 0.9
+      },
+      {
+        "cluster": "3",
+        "n_cells": 324,
+        "mean_alpha": 0.44653941750553144,
+        "std_alpha": 0.26368583742936114,
+        "min_alpha": 0.1,
+        "max_alpha": 0.9,
+        "median_alpha": 0.425000165
+      },
+      {
+        "cluster": "4",
+        "n_cells": 155,
+        "mean_alpha": 0.8797851897146008,
+        "std_alpha": 0.08697079922926793,
+        "min_alpha": 0.19972848519410002,
+        "max_alpha": 0.9,
+        "median_alpha": 0.9
+      },
+      {
+        "cluster": "5",
+        "n_cells": 154,
+        "mean_alpha": 0.8524643674868703,
+        "std_alpha": 0.09737935030140599,
+        "min_alpha": 0.431176622,
+        "max_alpha": 0.9,
+        "median_alpha": 0.9
+      },
+      {
+        "cluster": "6",
+        "n_cells": 47,
+        "mean_alpha": 0.6445341038989721,
+        "std_alpha": 0.3132603085971863,
+        "min_alpha": 0.1,
+        "max_alpha": 0.9,
+        "median_alpha": 0.884818203593
+      },
+      {
+        "cluster": "7",
+        "n_cells": 12,
+        "mean_alpha": 0.14421128361725002,
+        "std_alpha": 0.07082412482621697,
+        "min_alpha": 0.1,
+        "max_alpha": 0.331102234832,
+        "median_alpha": 0.10322012379225
+      }
+    ]
+  },
+  "pca_comparison": {
+    "correlation_pearson": 0.7351189872118543,
+    "correlation_p_pearson": 0.0,
+    "correlation_spearman": 0.7886621339694657,
+    "correlation_p_spearman": 0.0
+  }
+}

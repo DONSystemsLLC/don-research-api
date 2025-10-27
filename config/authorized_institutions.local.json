@@ -1,0 +1,12 @@
+{
+  "demo_token": {
+    "name": "Demo Access",
+    "contact": "demo@donsystems.com",
+    "rate_limit": 100
+  },
+  "tamu_cai_lab_2025_HkRs17sgvbjnQax2KzD1iqYcHWbAs5xvZZ2ApKptWuc": {
+    "name": "Texas A&M University",
+    "contact": "jcai@tamu.edu",
+    "rate_limit": 1000
+  }
+}

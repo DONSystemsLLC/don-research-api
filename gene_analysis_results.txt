@@ -1,0 +1,362 @@
+WARNING: adata.X seems to be already log-transformed.
+/Users/donnievanmetre/don-research-api/gene_analysis.py:32: FutureWarning: In the future, the default backend for leiden will be igraph instead of leidenalg.
+
+ To achieve the future defaults please pass: flavor="igraph" and n_iterations=2.  directed must also be False to work with igraph's implementation.
+  sc.tl.leiden(adata, resolution=0.5)
+======================================================================
+GENE EXPRESSION ANALYSIS: ALPHA REGIMES
+======================================================================
+
+Dataset: 2700 cells × 13714 genes
+
+Clusters: 7
+
+======================================================================
+CLASSIFYING CELLS BY ALPHA
+======================================================================
+
+Computing alpha for all cells (this may take a minute)...
+
+  Processed 500/2700 cells...
+  Processed 1000/2700 cells...
+  Processed 1500/2700 cells...
+  Processed 2000/2700 cells...
+  Processed 2500/2700 cells...
+
+✓ Alpha computed for all 2700 cells
+
+Alpha regime distribution:
+  high : 1273 cells ( 47.1%)
+  low  : 1107 cells ( 41.0%)
+  mid  :  320 cells ( 11.9%)
+
+======================================================================
+ALPHA STATISTICS BY CLUSTER
+======================================================================
+
+Cluster 0 (1154 cells):
+  Alpha: 0.1518 ± 0.0953
+  Range: [0.1000, 0.6404]
+  Regimes: low=1048, mid=106
+
+Cluster 1 (521 cells):
+  Alpha: 0.8935 ± 0.0383
+  Range: [0.4183, 0.9000]
+  Regimes: high=514, mid=7
+
+Cluster 2 (361 cells):
+  Alpha: 0.8798 ± 0.0884
+  Range: [0.1745, 0.9000]
+  Regimes: high=348, mid=12, low=1
+
+Cluster 3 (330 cells):
+  Alpha: 0.5521 ± 0.2444
+  Range: [0.1000, 0.9000]
+  Regimes: mid=169, high=105, low=56
+
+Cluster 4 (160 cells):
+  Alpha: 0.8342 ± 0.1224
+  Range: [0.2600, 0.9000]
+  Regimes: high=142, mid=16, low=2
+
+Cluster 5 (159 cells):
+  Alpha: 0.8735 ± 0.0809
+  Range: [0.4018, 0.9000]
+  Regimes: high=150, mid=9
+
+Cluster 6 (15 cells):
+  Alpha: 0.8745 ± 0.0987
+  Range: [0.5177, 0.9000]
+  Regimes: high=14, mid=1
+
+======================================================================
+DIFFERENTIAL GENE EXPRESSION
+======================================================================
+
+Finding genes that distinguish low-alpha from high-alpha cells...
+
+TOP GENES ENRICHED IN LOW-ALPHA CELLS:
+----------------------------------------------------------------------
+ names    scores  logfoldchanges         pvals     pvals_adj
+  CD3D 26.808573        3.139485 2.567098e-158 1.283549e-155
+  IL32 22.440992        2.586228 1.567059e-111 3.134117e-109
+   LTB 22.236103        2.084369 1.537410e-109 2.795291e-107
+ RPS29 21.631449        0.836157 9.088345e-104 1.514724e-101
+  IL7R 20.746765        2.647911  1.311224e-95  1.748298e-93
+ RPL31 20.552290        0.517050  7.341573e-94  9.176966e-92
+  RPSA 20.130716        0.595930  3.972105e-90  4.673064e-88
+RPS27A 20.117390        0.551956  5.197279e-90  5.774755e-88
+  RPL9 20.012510        0.488349  4.285108e-89  4.510640e-87
+  JUNB 18.083302        0.536268  4.314506e-73  3.922278e-71
+ RPS3A 18.065258        0.431946  5.984167e-73  5.203623e-71
+ RPL21 16.884382        0.302148  5.862617e-64  4.509705e-62
+MALAT1 14.248176        0.208297  4.601488e-46  2.244628e-44
+  RPL7 13.885327        0.314308  7.774469e-44  3.616032e-42
+   CD7 12.632224        1.741767  1.402578e-36  5.500306e-35
+   JUN 12.148911        0.762087  5.813448e-34  2.193754e-32
+  CCR7 12.144017        2.694043  6.171948e-34  2.285907e-32
+  CD3G 11.153602        2.187308  6.876566e-29  2.148927e-27
+  RGCC 11.052311        2.070087  2.136431e-28  6.474032e-27
+ RPL34 10.911242        0.368224  1.018546e-27  2.995723e-26
+
+======================================================================
+TOP GENES ENRICHED IN HIGH-ALPHA CELLS:
+----------------------------------------------------------------------
+   names    scores  logfoldchanges         pvals     pvals_adj
+ HLA-DRA 33.795856        3.537968 2.268960e-250 4.537919e-247
+HLA-DRB1 31.899786        4.139726 2.688298e-223 1.792199e-220
+    CD74 29.764458        1.441300 1.127254e-194 4.509017e-192
+HLA-DPA1 29.665155        3.414235 2.162635e-193 7.208782e-191
+HLA-DPB1 29.504429        3.232573 2.525946e-191 7.216989e-189
+HLA-DRB5 27.303946        4.674685 3.807973e-164 9.519934e-162
+  TYROBP 26.590891        3.766531 8.651752e-156 1.922612e-153
+    CYBA 25.968067        1.211655 1.136806e-148 2.273612e-146
+  FCER1G 25.183304        3.909936 6.104118e-140 1.017353e-137
+     FTL 23.894110        0.502175 3.526465e-126 5.037807e-124
+    CTSS 23.424990        2.243184 2.378168e-121 2.797845e-119
+    CST3 23.251307        3.142045 1.379897e-119 1.533218e-117
+  LGALS1 23.082619        2.529622 6.921715e-118 7.286016e-116
+     LYZ 21.331251        1.761254 5.822886e-101  5.063379e-99
+    SAT1 21.102428        1.781912  7.555580e-99  6.296317e-97
+  S100A9 20.927113        3.189295  3.033205e-97  2.333235e-95
+    LST1 20.824545        2.995088  2.593771e-96  1.921312e-94
+    TYMP 20.703110        3.019720  3.247204e-95  2.319432e-93
+    FTH1 20.199915        0.360074  9.806526e-91  6.537684e-89
+   GSTP1 20.172148        2.239039  1.720074e-90  1.109725e-88
+
+======================================================================
+MOST DISCRIMINATIVE GENES
+======================================================================
+
+Low-alpha signature genes:
+  CD3D            logFC=  3.14  p=1.28e-155
+  IL32            logFC=  2.59  p=3.13e-109
+  LTB             logFC=  2.08  p=2.80e-107
+  RPS29           logFC=  0.84  p=1.51e-101
+  IL7R            logFC=  2.65  p=1.75e-93
+  RPL31           logFC=  0.52  p=9.18e-92
+  RPSA            logFC=  0.60  p=4.67e-88
+  RPS27A          logFC=  0.55  p=5.77e-88
+  RPL9            logFC=  0.49  p=4.51e-87
+  JUNB            logFC=  0.54  p=3.92e-71
+
+High-alpha signature genes:
+  HLA-DRA         logFC=  3.54  p=4.54e-247
+  HLA-DRB1        logFC=  4.14  p=1.79e-220
+  CD74            logFC=  1.44  p=4.51e-192
+  HLA-DPA1        logFC=  3.41  p=7.21e-191
+  HLA-DPB1        logFC=  3.23  p=7.22e-189
+  HLA-DRB5        logFC=  4.67  p=9.52e-162
+  TYROBP          logFC=  3.77  p=1.92e-153
+  CYBA            logFC=  1.21  p=2.27e-146
+  FCER1G          logFC=  3.91  p=1.02e-137
+  FTL             logFC=  0.50  p=5.04e-124
+
+======================================================================
+EXPRESSION PATTERNS: TOP MARKERS
+======================================================================
+
+Low-alpha markers across all clusters:
+----------------------------------------------------------------------
+
+CD3D:
+  Cluster 0: 2.380
+  Cluster 1: 0.214
+  Cluster 2: 0.153
+  Cluster 3: 2.512
+  Cluster 4: 0.180
+  Cluster 5: 0.179
+  Cluster 6: 0.000
+
+IL32:
+  Cluster 0: 2.342
+  Cluster 1: 0.260
+  Cluster 2: 0.260
+  Cluster 3: 2.762
+  Cluster 4: 1.456
+  Cluster 5: 0.340
+  Cluster 6: 0.085
+
+LTB:
+  Cluster 0: 2.741
+  Cluster 1: 0.586
+  Cluster 2: 2.803
+  Cluster 3: 1.698
+  Cluster 4: 0.670
+  Cluster 5: 1.459
+  Cluster 6: 0.336
+
+RPS29:
+  Cluster 0: 2.960
+  Cluster 1: 2.158
+  Cluster 2: 2.786
+  Cluster 3: 2.700
+  Cluster 4: 1.941
+  Cluster 5: 2.161
+  Cluster 6: 0.864
+
+IL7R:
+  Cluster 0: 1.739
+  Cluster 1: 0.282
+  Cluster 2: 0.300
+  Cluster 3: 1.314
+  Cluster 4: 0.344
+  Cluster 5: 0.288
+  Cluster 6: 0.241
+
+======================================================================
+High-alpha markers across all clusters:
+----------------------------------------------------------------------
+
+HLA-DRA:
+  Cluster 0: 0.708
+  Cluster 1: 2.844
+  Cluster 2: 3.367
+  Cluster 3: 0.781
+  Cluster 4: 0.739
+  Cluster 5: 2.655
+  Cluster 6: 1.626
+
+HLA-DRB1:
+  Cluster 0: 0.307
+  Cluster 1: 2.356
+  Cluster 2: 3.007
+  Cluster 3: 0.916
+  Cluster 4: 0.394
+  Cluster 5: 2.455
+  Cluster 6: 0.866
+
+CD74:
+  Cluster 0: 1.894
+  Cluster 1: 2.869
+  Cluster 2: 3.471
+  Cluster 3: 2.289
+  Cluster 4: 2.180
+  Cluster 5: 2.797
+  Cluster 6: 2.297
+
+HLA-DPA1:
+  Cluster 0: 0.477
+  Cluster 1: 2.148
+  Cluster 2: 2.997
+  Cluster 3: 1.035
+  Cluster 4: 0.785
+  Cluster 5: 2.617
+  Cluster 6: 0.328
+
+HLA-DPB1:
+  Cluster 0: 0.578
+  Cluster 1: 2.129
+  Cluster 2: 3.103
+  Cluster 3: 1.266
+  Cluster 4: 0.715
+  Cluster 5: 2.410
+  Cluster 6: 0.877
+
+======================================================================
+CELL TYPE PREDICTIONS
+======================================================================
+
+Checking known immune cell markers...
+
+T cells:
+  Cluster 0: 1.772 (CD3D, CD3E, CD3G) ← LIKELY
+  Cluster 1: 0.164
+  Cluster 2: 0.179
+  Cluster 3: 1.753 (CD3D, CD3E, CD3G) ← LIKELY
+  Cluster 4: 0.429
+  Cluster 5: 0.194
+  Cluster 6: 0.163
+
+CD4+ T cells:
+  Cluster 0: 0.993 (CD4, IL7R) ← LIKELY
+  Cluster 1: 0.430
+  Cluster 2: 0.171
+  Cluster 3: 0.696 (CD4, IL7R) ← LIKELY
+  Cluster 4: 0.186
+  Cluster 5: 0.419
+  Cluster 6: 0.121
+
+CD8+ T cells:
+  Cluster 0: 0.334
+  Cluster 1: 0.039
+  Cluster 2: 0.050
+  Cluster 3: 1.189 (CD8A, CD8B) ← LIKELY
+  Cluster 4: 0.100
+  Cluster 5: 0.072
+  Cluster 6: 0.137
+
+B cells:
+  Cluster 0: 0.158
+  Cluster 1: 0.142
+  Cluster 2: 2.559 (CD79A, CD79B, MS4A1) ← LIKELY
+  Cluster 3: 0.137
+  Cluster 4: 0.224
+  Cluster 5: 0.514 (CD79A, CD79B, MS4A1) ← LIKELY
+  Cluster 6: 0.168
+
+NK cells:
+  Cluster 0: 0.187
+  Cluster 1: 0.264
+  Cluster 2: 0.150
+  Cluster 3: 1.361 (NKG7, GNLY, KLRD1) ← LIKELY
+  Cluster 4: 2.567 (NKG7, GNLY, KLRD1) ← LIKELY
+  Cluster 5: 0.322
+  Cluster 6: 0.193
+
+Monocytes:
+  Cluster 0: 0.467
+  Cluster 1: 1.787 (CD14, FCGR3A, LYZ) ← LIKELY
+  Cluster 2: 0.412
+  Cluster 3: 0.558 (CD14, FCGR3A, LYZ) ← LIKELY
+  Cluster 4: 1.053 (CD14, FCGR3A, LYZ) ← LIKELY
+  Cluster 5: 1.884 (CD14, FCGR3A, LYZ) ← LIKELY
+  Cluster 6: 0.718 (CD14, FCGR3A, LYZ) ← LIKELY
+
+Dendritic cells:
+  Cluster 0: 0.240
+  Cluster 1: 1.650 (FCER1A, CST3) ← LIKELY
+  Cluster 2: 0.256
+  Cluster 3: 0.230
+  Cluster 4: 0.303
+  Cluster 5: 1.485 (FCER1A, CST3) ← LIKELY
+  Cluster 6: 1.076 (FCER1A, CST3) ← LIKELY
+
+Megakaryocytes:
+  Cluster 0: 0.019
+  Cluster 1: 0.083
+  Cluster 2: 0.036
+  Cluster 3: 0.036
+  Cluster 4: 0.000
+  Cluster 5: 0.122
+  Cluster 6: 3.710 (PPBP, PF4) ← LIKELY
+
+======================================================================
+SUMMARY: BIOLOGICAL INSIGHTS
+======================================================================
+
+1. LOW-ALPHA CELLS (primarily Cluster 0):
+   Signature genes: CD3D, IL32, LTB, RPS29, IL7R
+   Cell count: 1107 cells
+   Clusters: ['3', '0', '2', '4']
+Categories (7, object): ['0', '1', '2', '3', '4', '5', '6']
+
+2. HIGH-ALPHA CELLS (Clusters 1-6):
+   Signature genes: HLA-DRA, HLA-DRB1, CD74, HLA-DPA1, HLA-DPB1
+   Cell count: 1273 cells
+   Clusters: ['1', '2', '3', '4', '5', '6']
+
+3. DISCRIMINATIVE POWER:
+   Best p-value (low): 1.28e-155
+   Best p-value (high): 4.54e-247
+   → Alpha regimes are MOLECULARLY DISTINCT
+
+4. BIOLOGICAL INTERPRETATION:
+   Based on marker expression, tentative cell type assignments:
+
+======================================================================
+ANALYSIS COMPLETE
+======================================================================
+
+Alpha regimes are not just mathematical abstractions -
+they correspond to distinct gene expression programs.

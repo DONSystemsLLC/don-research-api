@@ -1,0 +1,70 @@
+
+======================================================================
+  🔬 LOADING PBMC3K CLUSTER VECTORS
+======================================================================
+
+✓ Loaded 8 cluster vectors
+  Cluster 0: 1151 cells, 128D
+  Cluster 1: 509 cells, 128D
+  Cluster 2: 348 cells, 128D
+  Cluster 3: 324 cells, 128D
+  Cluster 4: 155 cells, 128D
+  Cluster 5: 154 cells, 128D
+  Cluster 6: 47 cells, 128D
+  Cluster 7: 12 cells, 128D
+
+======================================================================
+  🧪 EXPERIMENT 1: Testing QAC Input Formats
+======================================================================
+
+Test 1A: 3 small quantum states (5D each)
+--------------------------------------------------
+✓ Success!
+  Input: 3 states × 5D
+  Output: 3 states
+  Output dimensions: 1D
+  Algorithm: QAC Multi-layer Adjacency (REAL)
+  Coherence: 0.9500
+
+--------------------------------------------------
+Test 1B: 8 cluster vectors (128D each)
+--------------------------------------------------
+✓ Success!
+  Input: 8 states × 128D
+  Output: 8 states
+  Output dimensions: 8D
+  Algorithm: QAC Multi-layer Adjacency (REAL)
+  Coherence: 0.9500
+
+  📊 Per-Cluster Analysis:
+    C0 (1151 cells):  2028.10 →     1.00 ( 0.00× norm)
+    C1 ( 509 cells):  1855.76 →     1.00 ( 0.00× norm)
+    C2 ( 348 cells):  1594.57 →     1.00 ( 0.00× norm)
+    C3 ( 324 cells):  1759.12 →     1.00 ( 0.00× norm)
+    C4 ( 155 cells):  2126.26 →     1.00 ( 0.00× norm)
+    C5 ( 154 cells):  1900.15 →     1.00 ( 0.00× norm)
+    C6 (  47 cells):  2397.24 →     1.00 ( 0.00× norm)
+    C7 (  12 cells):  1011.85 →     1.00 ( 0.00× norm)
+
+======================================================================
+  🧬 EXPERIMENT 2: Chunk-wise Stabilization
+======================================================================
+
+Breaking 128D cluster vector into smaller quantum states...
+--------------------------------------------------
+Cluster 0: 1151 cells
+Original: 1 vector × 128D
+Chunked: 8 vectors × 16D
+
+✓ QAC stabilized 8 chunks!
+  Algorithm: QAC Multi-layer Adjacency (REAL)
+  Coherence: 0.9500
+
+  📊 Reconstruction:
+    Original norm: 2028.0975
+    Stabilized norm: 2.8284
+    Ratio: 0.0014×
+Traceback (most recent call last):
+  File "/Users/donnievanmetre/don-research-api/qac_simple_test.py", line 157, in <module>
+    dot_product = np.dot(psi_128d, stabilized_full)
+ValueError: shapes (128,) and (64,) not aligned: 128 (dim 0) != 64 (dim 0)

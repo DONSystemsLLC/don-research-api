@@ -1,0 +1,110 @@
+{
+  "hypothesis": "Collapse is Creation - QAC stabilization reveals superposition states",
+  "methodology": {
+    "collapse_measurement": "abs(after_QAC - before_QAC) per module",
+    "n_modules": 8,
+    "qac_parameters": {
+      "num_qubits": 8,
+      "layers": 3,
+      "reinforce_rate": 0.05
+    }
+  },
+  "regime_collapse_dynamics": {
+    "low_alpha": {
+      "n_cells": 200,
+      "total_collapse_mean": 10.74345173422269,
+      "total_collapse_std": 0.9584327645772621,
+      "mean_collapse": 1.3429314667778363,
+      "max_collapse": 2.7559229916287986,
+      "entropy_reduction": -2.6396299089119686,
+      "module_collapse_magnitudes": {
+        "ribosomal": 0.23261778334324837,
+        "mitochondrial": 2.5629015717989705,
+        "immune_activation": 0.2401135640947979,
+        "t_cell_identity": 2.627651790065909,
+        "inflammatory": 1.7056368321442528,
+        "cell_cycle": 1.1595123143461867,
+        "transcription": 1.965145361884334,
+        "housekeeping": 0.24987251654499254
+      },
+      "module_collapse_directions": {
+        "ribosomal": -0.15788777396568285,
+        "mitochondrial": -2.5629015717989705,
+        "immune_activation": 0.20050945213376564,
+        "t_cell_identity": -2.627651790065909,
+        "inflammatory": -1.7056368321442528,
+        "cell_cycle": -1.1595123143461867,
+        "transcription": -1.965145361884334,
+        "housekeeping": -0.10034178819107822
+      }
+    },
+    "high_alpha": {
+      "n_cells": 200,
+      "total_collapse_mean": 12.604481003685272,
+      "total_collapse_std": 1.7615769111284492,
+      "mean_collapse": 1.575560125460659,
+      "max_collapse": 3.376338480877985,
+      "entropy_reduction": -3.9110012785654966,
+      "module_collapse_magnitudes": {
+        "ribosomal": 0.37599422784044306,
+        "mitochondrial": 3.223984002293002,
+        "immune_activation": 0.6216406348319636,
+        "t_cell_identity": 2.7582021514818784,
+        "inflammatory": 1.4673871592649521,
+        "cell_cycle": 1.8985023902712408,
+        "transcription": 1.782591254797072,
+        "housekeeping": 0.47617918290472333
+      },
+      "module_collapse_directions": {
+        "ribosomal": -0.19664569283475403,
+        "mitochondrial": -3.223984002293002,
+        "immune_activation": 0.6139637514822561,
+        "t_cell_identity": -2.7582021514818784,
+        "inflammatory": -1.461793743888819,
+        "cell_cycle": -1.8985023902712408,
+        "transcription": -1.782591254797072,
+        "housekeeping": -0.26553287410652315
+      }
+    }
+  },
+  "edge_of_collapse_modules": {
+    "module_collapse_cvs": {
+      "ribosomal": 0.6939802628711258,
+      "mitochondrial": 0.2740980168059915,
+      "immune_activation": 0.6486510630594445,
+      "t_cell_identity": 0.12384677124494718,
+      "inflammatory": 0.2497907253313047,
+      "cell_cycle": 0.35155306328034314,
+      "transcription": 0.1464578961935158,
+      "housekeeping": 0.7806785967082039
+    },
+    "module_collapse_means": {
+      "ribosomal": 0.30060312800159183,
+      "mitochondrial": 2.818032806932116,
+      "immune_activation": 0.42051329464322645,
+      "t_cell_identity": 2.6823831219273693,
+      "inflammatory": 1.6225365939186285,
+      "cell_cycle": 1.4863128029298163,
+      "transcription": 1.8974773066135344,
+      "housekeeping": 0.35141741816012695
+    },
+    "edge_of_collapse_ranking": [
+      "housekeeping",
+      "ribosomal",
+      "immune_activation",
+      "cell_cycle",
+      "mitochondrial",
+      "inflammatory",
+      "transcription",
+      "t_cell_identity"
+    ]
+  },
+  "collapse_alpha_correlation": {
+    "pearson_r": 0.5693822367810724,
+    "pearson_p": 2.637903671061564e-44,
+    "spearman_r": 0.5242812069859272,
+    "spearman_p": 1.187726619005132e-36,
+    "low_alpha_collapse_mean": 10.736020946249807,
+    "high_alpha_collapse_mean": 12.822382609581615
+  }
+}

@@ -1,0 +1,31 @@
+
+======================================================================
+  🔬 LOADING PBMC3K CLUSTER VECTORS
+======================================================================
+
+✓ Loaded 8 cluster vectors
+  Cluster 0: 1151 cells, 128D vector
+  Cluster 1: 509 cells, 128D vector
+  Cluster 2: 348 cells, 128D vector
+  Cluster 3: 324 cells, 128D vector
+  Cluster 4: 155 cells, 128D vector
+  Cluster 5: 154 cells, 128D vector
+  Cluster 6: 47 cells, 128D vector
+  Cluster 7: 12 cells, 128D vector
+
+======================================================================
+  🌀 EXPERIMENT 1: QAC Stabilization of Individual Clusters
+======================================================================
+
+Testing how QAC affects cluster stability and coherence...
+
+🔬 Stabilizing Cluster 0 (1151 cells):
+Traceback (most recent call last):
+  File "/Users/donnievanmetre/don-research-api/qac_exploration.py", line 83, in <module>
+    similarity = 1 - cosine(cv['psi'], stabilized_state)
+                     ~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/donnievanmetre/don-research-api/.venv/lib/python3.13/site-packages/scipy/spatial/distance.py", line 694, in cosine
+    return correlation(u, v, w=w, centered=False)
+  File "/Users/donnievanmetre/don-research-api/.venv/lib/python3.13/site-packages/scipy/spatial/distance.py", line 644, in correlation
+    uv = np.dot(u, vw)
+ValueError: shapes (128,) and (8,) not aligned: 128 (dim 0) != 8 (dim 0)

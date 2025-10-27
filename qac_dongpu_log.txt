@@ -1,0 +1,17 @@
+WARNING: adata.X seems to be already log-transformed.
+/Users/donnievanmetre/don-research-api/qac_dongpu_analysis.py:46: FutureWarning: In the future, the default backend for leiden will be igraph instead of leidenalg.
+
+ To achieve the future defaults please pass: flavor="igraph" and n_iterations=2.  directed must also be False to work with igraph's implementation.
+  sc.tl.leiden(adata, resolution=0.5)
+/Users/donnievanmetre/don-research-api/.venv/lib/python3.13/site-packages/sklearn/utils/extmath.py:205: RuntimeWarning: divide by zero encountered in matmul
+  ret = a @ b
+/Users/donnievanmetre/don-research-api/.venv/lib/python3.13/site-packages/sklearn/utils/extmath.py:205: RuntimeWarning: overflow encountered in matmul
+  ret = a @ b
+/Users/donnievanmetre/don-research-api/.venv/lib/python3.13/site-packages/sklearn/utils/extmath.py:205: RuntimeWarning: invalid value encountered in matmul
+  ret = a @ b
+/Users/donnievanmetre/don-research-api/.venv/lib/python3.13/site-packages/sklearn/cluster/_kmeans.py:244: RuntimeWarning: divide by zero encountered in matmul
+  current_pot = closest_dist_sq @ sample_weight
+/Users/donnievanmetre/don-research-api/.venv/lib/python3.13/site-packages/sklearn/cluster/_kmeans.py:244: RuntimeWarning: overflow encountered in matmul
+  current_pot = closest_dist_sq @ sample_weight
+/Users/donnievanmetre/don-research-api/.venv/lib/python3.13/site-packages/sklearn/cluster/_kmeans.py:244: RuntimeWarning: invalid value encountered in matmul
+  current_pot = closest_dist_sq @ sample_weight
