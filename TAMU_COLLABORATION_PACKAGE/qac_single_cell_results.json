@@ -1,0 +1,839 @@
+{
+  "timestamp": "2025-10-27T09:52:32.542420",
+  "method": "Single-Cell QAC Stability Analysis",
+  "parameters": {
+    "qac_layers": 3,
+    "qac_reinforce_rate": 0.05,
+    "qac_num_qubits": 8,
+    "n_genes": 100,
+    "n_cells_sampled": 500
+  },
+  "alpha_analysis": {
+    "correlation_pearson": -0.011111971979301158,
+    "correlation_p": 0.8042450464461104,
+    "correlation_spearman": -0.03680298878775755,
+    "low_alpha_stability": {
+      "mean": -23975691.22669571,
+      "std": 77893259.85815197,
+      "n": 180
+    },
+    "mid_alpha_stability": {
+      "mean": -42357015.83934486,
+      "std": 101638850.94562949,
+      "n": 85
+    },
+    "high_alpha_stability": {
+      "mean": -27785175.43502879,
+      "std": 80665615.83459356,
+      "n": 235
+    }
+  },
+  "gene_stability_stats": [
+    {
+      "gene": "AL627309.1",
+      "mean_stability": -100248518.21484825,
+      "std_stability": 599957103.0401007,
+      "min_stability": -9954176000.0,
+      "max_stability": 1.0,
+      "cv_stability": -5.984697965852211
+    },
+    {
+      "gene": "AP006222.2",
+      "mean_stability": -354411853.70288146,
+      "std_stability": 1232292292.5948758,
+      "min_stability": -11757411328.0,
+      "max_stability": 1.0,
+      "cv_stability": -3.4770064254903814
+    },
+    {
+      "gene": "RP11-206L10.2",
+      "mean_stability": -1300625644.1668208,
+      "std_stability": 4081804391.8467355,
+      "min_stability": -21125269504.0,
+      "max_stability": 1.0,
+      "cv_stability": -3.138339160198194
+    },
+    {
+      "gene": "RP11-206L10.9",
+      "mean_stability": -169021311.6228654,
+      "std_stability": 724726676.9717486,
+      "min_stability": -9615517696.0,
+      "max_stability": 1.0,
+      "cv_stability": -4.287782824622849
+    },
+    {
+      "gene": "LINC00115",
+      "mean_stability": -369612927.1070242,
+      "std_stability": 1174100626.1454823,
+      "min_stability": -9135966208.0,
+      "max_stability": 1.0,
+      "cv_stability": -3.1765680798429234
+    },
+    {
+      "gene": "NOC2L",
+      "mean_stability": -63766833.361210056,
+      "std_stability": 525720017.6718564,
+      "min_stability": -6608849920.0,
+      "max_stability": 1.0,
+      "cv_stability": -8.244411553164198
+    },
+    {
+      "gene": "KLHL17",
+      "mean_stability": -356887852.677763,
+      "std_stability": 1104406325.560314,
+      "min_stability": -9151409152.0,
+      "max_stability": 1.0,
+      "cv_stability": -3.0945472569992223
+    },
+    {
+      "gene": "PLEKHN1",
+      "mean_stability": -174522544.07084826,
+      "std_stability": 902694735.5710734,
+      "min_stability": -9934930944.0,
+      "max_stability": 1.0,
+      "cv_stability": -5.172367503447693
+    },
+    {
+      "gene": "RP11-54O7.17",
+      "mean_stability": 0.998,
+      "std_stability": 0.044676615807377355,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.044766148099098936
+    },
+    {
+      "gene": "HES4",
+      "mean_stability": 0.94,
+      "std_stability": 0.23748684174075838,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.25264557629307854
+    },
+    {
+      "gene": "RP11-54O7.11",
+      "mean_stability": 0.998,
+      "std_stability": 0.044676615807377355,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.044766148099098936
+    },
+    {
+      "gene": "ISG15",
+      "mean_stability": 0.538,
+      "std_stability": 0.4985539088203,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.9266801277465277
+    },
+    {
+      "gene": "AGRN",
+      "mean_stability": 1.0,
+      "std_stability": 0.0,
+      "min_stability": 1.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.0
+    },
+    {
+      "gene": "C1orf159",
+      "mean_stability": 0.99,
+      "std_stability": 0.09949874371066199,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.1005037815157693
+    },
+    {
+      "gene": "TNFRSF18",
+      "mean_stability": 0.976,
+      "std_stability": 0.15304901175767194,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.15681251203072816
+    },
+    {
+      "gene": "TNFRSF4",
+      "mean_stability": 0.952,
+      "std_stability": 0.2137662274541982,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.22454435654594934
+    },
+    {
+      "gene": "SDF4",
+      "mean_stability": 0.874,
+      "std_stability": 0.331849363416596,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.37969034711513383
+    },
+    {
+      "gene": "B3GALT6",
+      "mean_stability": 0.974,
+      "std_stability": 0.15913516267626082,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.16338312388082393
+    },
+    {
+      "gene": "FAM132A",
+      "mean_stability": 1.0,
+      "std_stability": 0.0,
+      "min_stability": 1.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.0
+    },
+    {
+      "gene": "UBE2J2",
+      "mean_stability": 0.87,
+      "std_stability": 0.33630343441600474,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.3865556716981025
+    },
+    {
+      "gene": "ACAP3",
+      "mean_stability": 0.966,
+      "std_stability": 0.18122913673027305,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.18760780197879118
+    },
+    {
+      "gene": "PUSL1",
+      "mean_stability": 0.98,
+      "std_stability": 0.13999999999999999,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.1428571428425656
+    },
+    {
+      "gene": "CPSF3L",
+      "mean_stability": 0.916,
+      "std_stability": 0.2773878151613729,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.3028251256889633
+    },
+    {
+      "gene": "GLTPD1",
+      "mean_stability": 0.968,
+      "std_stability": 0.17600000000000002,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.18181818179939896
+    },
+    {
+      "gene": "DVL1",
+      "mean_stability": 0.996,
+      "std_stability": 0.063118935352238,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.0633724250460851
+    },
+    {
+      "gene": "MXRA8",
+      "mean_stability": 1.0,
+      "std_stability": 0.0,
+      "min_stability": 1.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.0
+    },
+    {
+      "gene": "AURKAIP1",
+      "mean_stability": 0.674,
+      "std_stability": 0.4687472666586974,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.6954707219423595
+    },
+    {
+      "gene": "CCNL2",
+      "mean_stability": 0.948,
+      "std_stability": 0.2220270253820467,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.23420572295213726
+    },
+    {
+      "gene": "RP4-758J18.2",
+      "mean_stability": 0.954,
+      "std_stability": 0.2094850830011531,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.21958604085869443
+    },
+    {
+      "gene": "MRPL20",
+      "mean_stability": 0.736,
+      "std_stability": 0.44079927404658914,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.5989120570471439
+    },
+    {
+      "gene": "ATAD3C",
+      "mean_stability": 0.998,
+      "std_stability": 0.044676615807377355,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.044766148099098936
+    },
+    {
+      "gene": "ATAD3B",
+      "mean_stability": 0.988,
+      "std_stability": 0.1088852607105296,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.11020775374444214
+    },
+    {
+      "gene": "ATAD3A",
+      "mean_stability": 0.986,
+      "std_stability": 0.11749042514179613,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.11915864617634915
+    },
+    {
+      "gene": "SSU72",
+      "mean_stability": 0.668,
+      "std_stability": 0.47093099282166595,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.7049865160945618
+    },
+    {
+      "gene": "AL645728.1",
+      "mean_stability": 0.99,
+      "std_stability": 0.09949874371066199,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.1005037815157693
+    },
+    {
+      "gene": "C1orf233",
+      "mean_stability": 0.996,
+      "std_stability": 0.063118935352238,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.0633724250460851
+    },
+    {
+      "gene": "RP11-345P4.9",
+      "mean_stability": 0.986,
+      "std_stability": 0.11749042514179613,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.11915864617634915
+    },
+    {
+      "gene": "MIB2",
+      "mean_stability": 0.932,
+      "std_stability": 0.251745903640953,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.27011363048706183
+    },
+    {
+      "gene": "MMP23B",
+      "mean_stability": 0.986,
+      "std_stability": 0.11749042514179613,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.11915864617634915
+    },
+    {
+      "gene": "CDK11B",
+      "mean_stability": 0.984,
+      "std_stability": 0.125475097130865,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.12751534259970881
+    },
+    {
+      "gene": "SLC35E2B",
+      "mean_stability": 0.974,
+      "std_stability": 0.15913516267626082,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.16338312388082393
+    },
+    {
+      "gene": "CDK11A",
+      "mean_stability": 0.94,
+      "std_stability": 0.23748684174075838,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.25264557629307854
+    },
+    {
+      "gene": "SLC35E2",
+      "mean_stability": 0.998,
+      "std_stability": 0.044676615807377355,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.044766148099098936
+    },
+    {
+      "gene": "NADK",
+      "mean_stability": 0.96,
+      "std_stability": 0.19595917942265426,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.2041241452106686
+    },
+    {
+      "gene": "GNB1",
+      "mean_stability": 0.89,
+      "std_stability": 0.3128897569432403,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.35156152461582485
+    },
+    {
+      "gene": "RP1-140A9.1",
+      "mean_stability": 1.0,
+      "std_stability": 0.0,
+      "min_stability": 1.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.0
+    },
+    {
+      "gene": "TMEM52",
+      "mean_stability": 0.996,
+      "std_stability": 0.063118935352238,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.0633724250460851
+    },
+    {
+      "gene": "PRKCZ",
+      "mean_stability": 0.984,
+      "std_stability": 0.125475097130865,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.12751534259970881
+    },
+    {
+      "gene": "RP5-892K4.1",
+      "mean_stability": 0.994,
+      "std_stability": 0.07722693830523131,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.07769309687873441
+    },
+    {
+      "gene": "C1orf86",
+      "mean_stability": 0.79,
+      "std_stability": 0.4073082370883261,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.5155800468819849
+    },
+    {
+      "gene": "AL590822.2",
+      "mean_stability": 0.998,
+      "std_stability": 0.044676615807377355,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.044766148099098936
+    },
+    {
+      "gene": "SKI",
+      "mean_stability": 0.97,
+      "std_stability": 0.1705872210923198,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.17586311451003453
+    },
+    {
+      "gene": "RER1",
+      "mean_stability": 0.766,
+      "std_stability": 0.42337217669563504,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.5527051914365072
+    },
+    {
+      "gene": "PEX10",
+      "mean_stability": 0.988,
+      "std_stability": 0.1088852607105296,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.11020775374444214
+    },
+    {
+      "gene": "PLCH2",
+      "mean_stability": 0.998,
+      "std_stability": 0.044676615807377355,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.044766148099098936
+    },
+    {
+      "gene": "PANK4",
+      "mean_stability": 0.976,
+      "std_stability": 0.15304901175767194,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.15681251203072816
+    },
+    {
+      "gene": "RP3-395M20.12",
+      "mean_stability": 0.946,
+      "std_stability": 0.22601769842204836,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.23891934291559877
+    },
+    {
+      "gene": "TNFRSF14",
+      "mean_stability": 0.782,
+      "std_stability": 0.4128873938497033,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.5279889946251974
+    },
+    {
+      "gene": "RP3-395M20.9",
+      "mean_stability": 0.998,
+      "std_stability": 0.044676615807377355,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.044766148099098936
+    },
+    {
+      "gene": "FAM213B",
+      "mean_stability": 0.982,
+      "std_stability": 0.132951118836962,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.13538810470817025
+    },
+    {
+      "gene": "MMEL1",
+      "mean_stability": 1.0,
+      "std_stability": 0.0,
+      "min_stability": 1.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.0
+    },
+    {
+      "gene": "TTC34",
+      "mean_stability": 1.0,
+      "std_stability": 0.0,
+      "min_stability": 1.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.0
+    },
+    {
+      "gene": "MEGF6",
+      "mean_stability": 1.0,
+      "std_stability": 0.0,
+      "min_stability": 1.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.0
+    },
+    {
+      "gene": "TPRG1L",
+      "mean_stability": 0.984,
+      "std_stability": 0.125475097130865,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.12751534259970881
+    },
+    {
+      "gene": "WRAP73",
+      "mean_stability": 0.962,
+      "std_stability": 0.19119623427254,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.19874868425432968
+    },
+    {
+      "gene": "TP73-AS1",
+      "mean_stability": 0.986,
+      "std_stability": 0.11749042514179613,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.11915864617634915
+    },
+    {
+      "gene": "SMIM1",
+      "mean_stability": 0.994,
+      "std_stability": 0.07722693830523131,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.07769309687873441
+    },
+    {
+      "gene": "LRRC47",
+      "mean_stability": 0.962,
+      "std_stability": 0.19119623427254,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.19874868425432968
+    },
+    {
+      "gene": "CEP104",
+      "mean_stability": 0.972,
+      "std_stability": 0.16497272501841023,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.16972502572164375
+    },
+    {
+      "gene": "DFFB",
+      "mean_stability": 0.988,
+      "std_stability": 0.10888526071052962,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.11020775374444215
+    },
+    {
+      "gene": "C1orf174",
+      "mean_stability": 0.952,
+      "std_stability": 0.2137662274541982,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.22454435654594934
+    },
+    {
+      "gene": "NPHP4",
+      "mean_stability": 0.992,
+      "std_stability": 0.08908422980528033,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.08980265100433474
+    },
+    {
+      "gene": "KCNAB2",
+      "mean_stability": 0.892,
+      "std_stability": 0.3103804117530615,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.3479601028231676
+    },
+    {
+      "gene": "RPL22",
+      "mean_stability": 0.202,
+      "std_stability": 0.4014922166119787,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 1.9875852297684165
+    },
+    {
+      "gene": "RNF207",
+      "mean_stability": 0.998,
+      "std_stability": 0.044676615807377355,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.044766148099098936
+    },
+    {
+      "gene": "ICMT",
+      "mean_stability": 0.966,
+      "std_stability": 0.18122913673027305,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.18760780197879118
+    },
+    {
+      "gene": "GPR153",
+      "mean_stability": 1.0,
+      "std_stability": 0.0,
+      "min_stability": 1.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.0
+    },
+    {
+      "gene": "ACOT7",
+      "mean_stability": 0.986,
+      "std_stability": 0.11749042514179611,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.11915864617634914
+    },
+    {
+      "gene": "RP1-202O8.3",
+      "mean_stability": 0.994,
+      "std_stability": 0.0772269383052313,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.0776930968787344
+    },
+    {
+      "gene": "ESPN",
+      "mean_stability": 0.998,
+      "std_stability": 0.044676615807377355,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.044766148099098936
+    },
+    {
+      "gene": "TNFRSF25",
+      "mean_stability": 0.932,
+      "std_stability": 0.251745903640953,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.27011363048706183
+    },
+    {
+      "gene": "PLEKHG5",
+      "mean_stability": 0.998,
+      "std_stability": 0.044676615807377355,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.044766148099098936
+    },
+    {
+      "gene": "NOL9",
+      "mean_stability": 0.982,
+      "std_stability": 0.132951118836962,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.13538810470817025
+    },
+    {
+      "gene": "ZBTB48",
+      "mean_stability": 0.97,
+      "std_stability": 0.1705872210923198,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.17586311451003453
+    },
+    {
+      "gene": "KLHL21",
+      "mean_stability": 0.994,
+      "std_stability": 0.07722693830523131,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.07769309687873441
+    },
+    {
+      "gene": "PHF13",
+      "mean_stability": 0.992,
+      "std_stability": 0.08908422980528033,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.08980265100433474
+    },
+    {
+      "gene": "THAP3",
+      "mean_stability": 0.976,
+      "std_stability": 0.15304901175767194,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.15681251203072816
+    },
+    {
+      "gene": "DNAJC11",
+      "mean_stability": 0.984,
+      "std_stability": 0.125475097130865,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.12751534259970881
+    },
+    {
+      "gene": "RP11-312B8.1",
+      "mean_stability": 1.0,
+      "std_stability": 0.0,
+      "min_stability": 1.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.0
+    },
+    {
+      "gene": "CAMTA1",
+      "mean_stability": 0.912,
+      "std_stability": 0.28329489935401236,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.3106303720646374
+    },
+    {
+      "gene": "VAMP3",
+      "mean_stability": 0.906,
+      "std_stability": 0.2918287168871494,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.3221067514955173
+    },
+    {
+      "gene": "PER3",
+      "mean_stability": 0.994,
+      "std_stability": 0.0772269383052313,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.0776930968787344
+    },
+    {
+      "gene": "UTS2",
+      "mean_stability": 0.994,
+      "std_stability": 0.0772269383052313,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.0776930968787344
+    },
+    {
+      "gene": "TNFRSF9",
+      "mean_stability": 0.998,
+      "std_stability": 0.044676615807377355,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.044766148099098936
+    },
+    {
+      "gene": "PARK7",
+      "mean_stability": 0.506,
+      "std_stability": 0.4999639987039066,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.9880711434883389
+    },
+    {
+      "gene": "SLC45A1",
+      "mean_stability": 1.0,
+      "std_stability": 0.0,
+      "min_stability": 1.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.0
+    },
+    {
+      "gene": "RERE",
+      "mean_stability": 0.954,
+      "std_stability": 0.2094850830011531,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.21958604085869443
+    },
+    {
+      "gene": "RP5-1115A15.1",
+      "mean_stability": 0.998,
+      "std_stability": 0.044676615807377355,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.044766148099098936
+    },
+    {
+      "gene": "ENO1",
+      "mean_stability": 0.44,
+      "std_stability": 0.4963869458396343,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 1.1281521493791342
+    },
+    {
+      "gene": "ENO1-AS1",
+      "mean_stability": 0.998,
+      "std_stability": 0.044676615807377355,
+      "min_stability": 0.0,
+      "max_stability": 1.0,
+      "cv_stability": 0.044766148099098936
+    }
+  ],
+  "cell_stabilities": {
+    "mean": -28890973.98876261,
+    "std": 83897489.72344181,
+    "min": -392954282.6241033,
+    "max": 1.0
+  }
+}

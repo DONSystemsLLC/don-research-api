@@ -1,0 +1,23 @@
+# DON Research API Client - Requirements
+# For Texas A&M Collaboration Package
+
+# Core dependencies
+requests>=2.31.0        # HTTP client for API calls
+pydantic>=2.0.0        # Data validation and serialization
+
+# Scientific computing
+numpy>=1.24.0          # Numerical arrays and operations
+scipy>=1.10.0          # Statistical functions (Mann-Whitney, Pearson)
+pandas>=2.0.0          # Data manipulation
+
+# Single-cell genomics
+scanpy>=1.9.0          # Single-cell analysis toolkit
+anndata>=0.9.0         # Annotated data matrices
+
+# Optional (for visualization)
+matplotlib>=3.7.0      # Plotting
+seaborn>=0.12.0        # Statistical visualizations
+
+# Development/Testing (optional)
+pytest>=7.4.0          # Testing framework
+pytest-asyncio>=0.21.0 # Async test support
