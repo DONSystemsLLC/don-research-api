@@ -1012,7 +1012,8 @@ async def audit_log_middleware(request: Request, call_next):
     # Log to database (async task, don't block response)
     try:
         async with db_session() as session:
-            await AuditRepository.create(session, {
+            audit_repo = AuditRepository(session)
+            await audit_repo.create({
                 "trace_id": trace_id,
                 "endpoint": str(request.url.path),
                 "method": request.method,

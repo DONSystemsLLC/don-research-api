@@ -200,20 +200,23 @@ class DatabaseSession:
             async with session.begin():
                 yield session
     
-    async def execute(self, query: str, params: Optional[dict] = None):
+    async def execute(self, query: str, params: Optional[dict] = None, fetch: bool = True):
         """
         Execute a raw SQL query.
         
         Args:
             query: SQL query string
             params: Query parameters
+            fetch: Whether to fetch results (False for DDL statements)
         
         Returns:
-            Query result
+            Query result (if fetch=True)
         """
         async with self.get_connection() as conn:
             result = await conn.execute(text(query), params or {})
-            return result.fetchall()
+            if fetch:
+                return result.fetchall()
+            return result
     
     async def create_tables(self) -> None:
         """Create all database tables."""
@@ -248,8 +251,8 @@ class DatabaseSession:
         logger.info("Enabling PostgreSQL extensions...")
         
         try:
-            # Enable pgvector extension
-            await self.execute("CREATE EXTENSION IF NOT EXISTS vector;")
+            # Enable pgvector extension (DDL statement, no rows to fetch)
+            await self.execute("CREATE EXTENSION IF NOT EXISTS vector;", fetch=False)
             logger.info("pgvector extension enabled")
         except Exception as e:
             logger.error(f"Failed to enable extensions: {e}")
